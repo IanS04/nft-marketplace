@@ -16,6 +16,7 @@
     "test:e2e": "playwright test",
     "test:e2e:update": "playwright test --update-snapshots",
     "test:e2e:visual": "playwright test visual",
+    "test:e2e:deploy": "playwright test -c playwright.deploy.config.ts",
     "audit:lighthouse": "pnpm build && node lighthouse/run-audit.mjs",
     "assets": "node scripts/optimize-assets.mjs"
   },

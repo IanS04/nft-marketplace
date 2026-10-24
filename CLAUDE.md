@@ -122,7 +122,8 @@ Otimizações: render imediato com **porta de rede** (`app/network-ready.ts`: Ax
 ### Etapa 10 (parte 2) — documentação e preparo do deploy (2026-10-24)
 `README.md` (setup, env, credenciais, cenários e reset, comandos, como reproduzir cada falha, testes, Lighthouse, estrutura) e `ARCHITECTURE.md` (camadas, contratos REST, eventos e limitações do transporte, sessão, carrinho, pedidos/idempotência, cache, reconciliação, MSW, acessibilidade, Lighthouse com justificativa, limitações, decisões de UX, desvios do Figma e assets). `vercel.json` (pnpm install --frozen-lockfile, `pnpm build`, `dist`, rewrite SPA `/(.*) → /index.html`, cache imutável em `/assets`, `no-cache` no `mockServiceWorker.js`). `package.json` com `packageManager: pnpm@10.34.8` e `engines.node >=20`. `run-audit.mjs` registra throttling por perfil e tem `--from-reports` (refaz o resumo sem medir de novo).
 
-Ainda **não existe**: deploy (o Ian importa o repositório na Vercel; depois validar o site publicado e colocar a URL no README).
+### Etapa 10 (parte 3) — deploy validado (2026-10-24)
+Publicado em **https://nft-marketplace-drab-chi.vercel.app** (Vercel, branch `main`; cada push gera deploy). Conferido: acesso direto/refresh em rotas profundas (rewrite SPA), `mockServiceWorker.js` com `no-cache`, `/assets` imutável. `pnpm test:e2e:deploy` (`playwright.deploy.config.ts`, sem webServer, timeout 45s, `E2E_BASE_URL` opcional) roda a suíte inteira contra o site: 237 passaram, 11 skips, 1 falha pontual (o download de um chunk de rota não respondeu na rede até a Vercel; o mesmo teste passou 9/9 ao repetir).
 
 ## 5. Decisões de arquitetura (não reverter sem conversar)
 

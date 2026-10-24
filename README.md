@@ -2,7 +2,7 @@
 
 Marketplace de NFTs em **React + TypeScript** (desafio frontend), com descoberta, compra e conta do colecionador em desktop e mobile. APIs, autenticação, carteiras, pagamentos e tempo real são **simulados com MSW**: não há backend nem blockchain real, e tudo roda no navegador.
 
-- **Demo publicada:** _(URL da Vercel — adicionada após o deploy)_
+- **Demo publicada:** https://nft-marketplace-drab-chi.vercel.app (Vercel, com mocks e tempo real ligados)
 - **Arquitetura, contratos, cache, tempo real, Lighthouse e desvios do Figma:** [`ARCHITECTURE.md`](./ARCHITECTURE.md)
 - **Enunciado e prints do Figma:** [`docs/`](./docs)
 
@@ -51,6 +51,7 @@ pnpm dev                  # http://localhost:5173
 | `pnpm lint` | ESLint |
 | `pnpm test:e2e` | Playwright completo (desktop 1440, tablet 768, mobile 390) |
 | `pnpm test:e2e:visual` | Só a regressão visual |
+| `pnpm test:e2e:deploy` | A mesma suíte contra o site publicado (`E2E_BASE_URL` para outra URL) |
 | `pnpm test:e2e:update` | Regenera as baselines visuais (após mudança **intencional** de layout) |
 | `pnpm audit:lighthouse` | Build + auditoria Lighthouse (3 medições por página e perfil) |
 | `pnpm assets` | Regera as imagens WebP a partir dos originais do Figma |
@@ -155,3 +156,7 @@ src/
 e2e/             specs, fixtures e baselines visuais
 lighthouse/      configuração, runner e relatórios
 ```
+
+## Deploy
+
+Publicado na **Vercel** a partir da branch `main` (`vercel.json`): `pnpm install --frozen-lockfile` + `pnpm build`, saída `dist/`, rewrite de todas as rotas para o `index.html` (acesso direto e refresh funcionam em qualquer rota) e cache imutável para `/assets`. Nenhuma variável de ambiente é necessária: os mocks (REST e Socket.IO) vêm ligados por padrão no build publicado. Cada push na `main` gera um novo deploy.
