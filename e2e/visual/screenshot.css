@@ -1,0 +1,8 @@
+/*
+ * Aplicado SÓ durante os screenshots de regressão visual (não afeta o app).
+ * Na captura de página inteira, elementos `position: fixed` aparecem no meio da imagem e cobrem
+ * conteúdo; aqui eles voltam ao fluxo normal e ficam no fim da página.
+ */
+nav[aria-label="Navegação inferior"] {
+  position: static !important;
+}

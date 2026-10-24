@@ -1,0 +1,79 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+
+    --background: 15 29% 6%;            /* ~#120C0A: fundo da página */
+    --foreground: 35 58% 89%;           /* ~#F3E5D2: texto creme */
+
+    --card: 14 28% 9%;                  /* ~#1E1411: cards, sidebar, rodapé */
+    --card-foreground: 35 58% 89%;
+    --card-elevated: 19 33% 11%;        /* ~#261913: modais (login, recibo) */
+    --popover: 19 33% 11%;
+    --popover-foreground: 35 58% 89%;
+
+    --primary: 28 59% 56%;              /* ~#D18A4C: CTAs, links, abas ativas */
+    --primary-hover: 28 59% 50%;
+    --primary-foreground: 15 29% 8%;    /* texto escuro sobre o laranja */
+
+    --secondary: 14 28% 12%;            /* campos, pills de edição */
+    --secondary-foreground: 35 58% 89%;
+    --muted: 14 28% 12%;
+    --muted-foreground: 29 41% 64%;     /* ~#C9A27E: descrições, labels */
+    --accent: 25 53% 15%;               /* ~#3A2312 */
+    --accent-foreground: 35 58% 89%;
+
+    --band: 25 53% 15%;                 /* faixa marrom do rodapé */
+    --required: 20 73% 55%;             /* ~#E0703A: asterisco */
+
+    --destructive: 6 75% 58%;           /* não aparece no Figma: erros de validação */
+    --destructive-foreground: 35 58% 94%;
+    --success: 142 38% 48%;             /* não aparece no Figma: confirmação/estado */
+    --warning: 40 80% 55%;              /* não aparece no Figma: preço alterado */
+
+    --border: 20 26% 18%;
+    --input: 20 26% 18%;
+    --ring: 28 59% 56%;
+    --radius: 0.75rem;
+  }
+
+  * { @apply border-border; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    @apply bg-background font-sans text-body text-foreground antialiased;
+    font-feature-settings: 'zero' 1; /* zero cortado, como nos valores em ETH do Figma */
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-ring ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer components {
+  /* Skeleton com shimmer: preserva dimensões e respeita movimento reduzido */
+  .skeleton {
+    @apply relative overflow-hidden rounded-lg bg-secondary;
+  }
+  .skeleton::after {
+    content: '';
+    @apply absolute inset-0 -translate-x-full animate-shimmer;
+    background-image: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--primary) / 0.08),
+      transparent
+    );
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .skeleton::after { animation: none; transform: none; opacity: 0; }
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

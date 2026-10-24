@@ -1,0 +1,10 @@
+node_modules
+dist
+.env
+.env.local
+playwright-report
+test-results
+blob-report
+lighthouse/reports/tmp
+*.log
+.DS_Store

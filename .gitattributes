@@ -1,0 +1,7 @@
+# Fins de linha LF no repositório (iguais em Windows, macOS e Linux).
+* text=auto eol=lf
+# Binários: nunca converter (baselines visuais e imagens).
+*.png binary
+*.webp binary
+*.jpg binary
+*.svg binary
