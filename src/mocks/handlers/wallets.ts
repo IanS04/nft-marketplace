@@ -44,7 +44,13 @@ export const walletHandlers = [
     const parsed = walletInputSchema.safeParse(await readJson(request))
     if (!parsed.success) return validationError(parsed.error)
     const current = ownWallet(auth.userId, params.walletId)
-    if (!current) return apiError('NOT_FOUND', 'Carteira não encontrada.', 404)
+    if (!current) {
+      // Falta de permissão (403) ≠ inexistente (404): a carteira existe, mas é de outro colecionador.
+      const foreign = mockDb.read().wallets.some((w) => w.id === params.walletId)
+      return foreign
+        ? apiError('FORBIDDEN', 'Você não tem permissão para alterar esta carteira.', 403)
+        : apiError('NOT_FOUND', 'Carteira não encontrada.', 404)
+    }
     // O papel (principal/secundária) não muda pela edição.
     const updated: Wallet = { ...current, ...parsed.data, role: current.role, updatedAt: new Date().toISOString() }
     mockDb.write((db) => { db.wallets = db.wallets.map((w) => (w.id === updated.id ? updated : w)) })

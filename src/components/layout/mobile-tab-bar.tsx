@@ -19,6 +19,8 @@ export function MobileTabBar() {
   }
 
   const isActive = (path: string) => (path === '/' ? pathname === '/' : pathname.startsWith(path))
+  const favoritesActive = isActive('/profile/favorites')
+  const profileActive = isActive('/profile') && !favoritesActive
 
   return (
     <nav
@@ -32,8 +34,8 @@ export function MobileTabBar() {
           </Link>
         </li>
         <li>
-          <Link to="/profile" className={cn(itemClass, isActive('/profile') && 'text-primary')}>
-            <Heart className="size-5" aria-hidden="true" /><span className="sr-only">Favoritos</span>
+          <Link to="/profile/favorites" className={cn(itemClass, favoritesActive && 'text-primary')} aria-current={favoritesActive ? 'page' : undefined}>
+            <Heart className="size-5" aria-hidden="true" /><span className="sr-only">Lista de interesse</span>
           </Link>
         </li>
         <li>
@@ -51,7 +53,7 @@ export function MobileTabBar() {
           </Link>
         </li>
         <li>
-          <Link to="/profile" className={cn(itemClass, isActive('/profile') && 'text-primary')}>
+          <Link to="/profile" className={cn(itemClass, profileActive && 'text-primary')} aria-current={profileActive ? 'page' : undefined}>
             <UserRound className="size-5" aria-hidden="true" /><span className="sr-only">Perfil</span>
           </Link>
         </li>

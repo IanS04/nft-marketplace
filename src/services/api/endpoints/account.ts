@@ -63,6 +63,10 @@ export const ordersApi = {
     const { data } = await http.get(`/orders/${encodeURIComponent(id)}`, { signal })
     return orderSchema.parse(data)
   },
+  async list(signal?: AbortSignal): Promise<Order[]> {
+    const { data } = await http.get('/orders', { signal })
+    return orderListSchema.parse(data).items
+  },
   async listPending(signal?: AbortSignal): Promise<Order[]> {
     const { data } = await http.get('/orders', { params: { status: 'pending' }, signal })
     return orderListSchema.parse(data).items

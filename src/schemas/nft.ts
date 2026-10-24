@@ -200,6 +200,7 @@ export const nftListResponseSchema = z.object({
 export const featuredNftsResponseSchema = z.object({ items: z.array(nftSummarySchema) })
 
 export const favoritesResponseSchema = z.object({ nftIds: z.array(branded<NftId>()) })
+export const favoriteNftsResponseSchema = z.object({ items: z.array(nftSummarySchema) })
 export type FavoritesResponse = z.infer<typeof favoritesResponseSchema>
 
 /** Parâmetro de rota `/nfts/$nftId` → NftId tipado. */

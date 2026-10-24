@@ -61,12 +61,13 @@ export function Footer({ className }: { className?: string }) {
           <FooterColumn title="Meu perfil">
             <li><Link to="/profile" className={linkClass}>Meu perfil</Link></li>
             <li><Unavailable className={linkClass}>Minha coleção</Unavailable></li>
-            <li><Unavailable className={linkClass}>Atividade</Unavailable></li>
+            <li><Link to="/profile/activity" className={linkClass}>Atividade</Link></li>
             <li><Unavailable className={linkClass}>Estúdio do criador</Unavailable></li>
-            <li><Unavailable className={linkClass}>Lista de interesse</Unavailable></li>
+            <li><Link to="/profile/favorites" className={linkClass}>Lista de interesse</Link></li>
           </FooterColumn>
           <FooterColumn title="Central de ajuda">
-            {['Central de ajuda', 'Como comprar NFTs', 'Carteira e segurança', 'Política do mercado', 'Denunciar item'].map((label) => (
+            <li><Link to="/profile/support" className={linkClass}>Central de ajuda</Link></li>
+            {['Como comprar NFTs', 'Carteira e segurança', 'Política do mercado', 'Denunciar item'].map((label) => (
               <li key={label}><Unavailable className={linkClass}>{label}</Unavailable></li>
             ))}
           </FooterColumn>

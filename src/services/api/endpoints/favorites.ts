@@ -1,5 +1,5 @@
-import { favoritesResponseSchema, type FavoritesResponse } from '@/schemas/nft'
-import type { NftId } from '@/types'
+import { favoriteNftsResponseSchema, favoritesResponseSchema, type FavoritesResponse } from '@/schemas/nft'
+import type { NftId, NftSummary } from '@/types'
 import { http } from '../http'
 
 const path = (id: NftId) => `/favorites/${encodeURIComponent(id)}`
@@ -8,6 +8,11 @@ export const favoritesApi = {
   async list(signal?: AbortSignal): Promise<FavoritesResponse> {
     const { data } = await http.get('/favorites', { signal })
     return favoritesResponseSchema.parse(data)
+  },
+  /** Lista de interesse: os NFTs favoritados, com preço e imagem. */
+  async listNfts(signal?: AbortSignal): Promise<NftSummary[]> {
+    const { data } = await http.get('/favorites/nfts', { signal })
+    return favoriteNftsResponseSchema.parse(data).items
   },
   // PUT e DELETE são idempotentes e devolvem a lista final (facilita o rollback/sync do cache)
   async add(id: NftId): Promise<FavoritesResponse> {

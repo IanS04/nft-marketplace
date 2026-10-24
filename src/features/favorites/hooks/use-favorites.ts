@@ -22,7 +22,21 @@ export function useFavorites() {
     enabled: status === 'authenticated' && !!userId,
   })
   const ids = useMemo(() => new Set<NftId>(query.data?.nftIds ?? []), [query.data])
-  return { ids, isLoading: query.isLoading }
+  return { ids, isLoading: query.isLoading, ready: query.data !== undefined }
+}
+
+/**
+ * Lista de interesse (NFTs completos). A tela filtra pelos ids de useFavorites: desfavoritar some
+ * da lista na hora (otimista) e volta se a mutation falhar (rollback).
+ */
+export function useFavoriteNfts() {
+  const { status, session } = useSession()
+  const userId = session?.user.id
+  return useQuery({
+    queryKey: userId ? queryKeys.user(userId).favoriteNfts : (['favorites', 'anonymous', 'nfts'] as const),
+    queryFn: ({ signal }) => favoritesApi.listNfts(signal),
+    enabled: status === 'authenticated' && !!userId,
+  })
 }
 
 interface ToggleVars { nftId: NftId; name: string; favorite: boolean }

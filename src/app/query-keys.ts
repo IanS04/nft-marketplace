@@ -16,6 +16,11 @@ export const queryKeys = {
     root: ['user', userId] as const,
     session: ['user', userId, 'session'] as const,
     favorites: ['user', userId, 'favorites'] as const,
+    /** Fica "abaixo" de favorites: invalidar os favoritos também relê a lista de interesse. */
+    favoriteNfts: ['user', userId, 'favorites', 'nfts'] as const,
+    activity: ['user', userId, 'activity'] as const,
+    downloads: ['user', userId, 'downloads'] as const,
+    supportTickets: ['user', userId, 'support', 'tickets'] as const,
     cart: ['user', userId, 'cart'] as const,
     wallets: ['user', userId, 'wallets'] as const,
     profile: ['user', userId, 'profile'] as const,
@@ -23,6 +28,9 @@ export const queryKeys = {
     pendingOrders: ['user', userId, 'orders', 'pending'] as const,
     order: (orderId: string) => ['user', userId, 'orders', 'detail', orderId] as const,
   }),
+
+  /** Ofertas (cupons publicados): iguais para todos os usuários. */
+  offers: ['offers'] as const,
 
   /** Carrinho do visitante: público, identificado pelo id guardado no navegador. */
   guestCart: (guestCartId: string) => ['cart', 'guest', guestCartId] as const,

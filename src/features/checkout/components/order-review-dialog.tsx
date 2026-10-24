@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { AlertTriangle, Loader2 } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { announce } from '@/components/feedback/announcer'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
@@ -15,6 +15,7 @@ import { compare, formatEth } from '@/lib/money'
 import { isApiError } from '@/services/api/errors'
 import type { Blockchain, CollectorDetails, EthAmount, Quote, Wallet, WalletProvider } from '@/types'
 import { useUserScope } from '@/features/account/hooks/use-user-scope'
+import { useSession } from '@/features/auth/hooks/use-session'
 import { useCreateOrder } from '../hooks/use-orders'
 
 const RETRY_ATTEMPTS = 3
@@ -44,6 +45,8 @@ export function OrderReviewDialog({ open, onOpenChange, seenTotal, wallet, provi
   const [quote, setQuote] = useState<Quote | null>(null)
   const [notice, setNotice] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const { status } = useSession()
+  const blockedBySession = useRef(false)
 
   /** Revalida no servidor: carrinho atual → cotação nova. Nunca confia no que está em cache. */
   const revalidate = useCallback(
@@ -63,6 +66,7 @@ export function OrderReviewDialog({ open, onOpenChange, seenTotal, wallet, provi
         setPhase(fresh.issues.some((i) => i.severity === 'blocking') ? 'error' : 'ready')
         if (fresh.issues.length) setError(fresh.issues.map((i) => i.message).join(' '))
       } catch (e) {
+        blockedBySession.current = isApiError(e) && e.status === 401
         setPhase('error')
         setError(errorMessage(e))
       }
@@ -75,6 +79,14 @@ export function OrderReviewDialog({ open, onOpenChange, seenTotal, wallet, provi
     // Só ao abrir: depois, quem manda revalidar é o fluxo de confirmação.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open])
+
+  // A sessão expirou no meio da revisão: depois do novo login, a conferência é refeita sozinha.
+  useEffect(() => {
+    if (!open || status !== 'authenticated' || !blockedBySession.current) return
+    blockedBySession.current = false
+    void revalidate(seenTotal)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status])
 
   const confirm = async () => {
     if (!quote) return

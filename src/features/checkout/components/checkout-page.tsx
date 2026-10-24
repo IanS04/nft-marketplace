@@ -45,7 +45,9 @@ export function CheckoutPage() {
       <CheckoutHeader />
       {cart.isPending || wallets.isPending || !user ? (
         <CheckoutSkeleton />
-      ) : cart.isError || wallets.isError ? (
+      ) : !cart.data || !wallets.data ? (
+        // Só sem dados: um erro em segundo plano (ex.: 401 da sessão expirada ao revisar) não pode
+        // desmontar o formulário e apagar o que foi digitado — o diálogo de sessão cuida da retomada.
         <ErrorState
           title="Não foi possível carregar o pagamento"
           error={cart.error ?? wallets.error}

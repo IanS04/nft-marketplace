@@ -8,6 +8,7 @@ export const SCENARIO_NAMES = [
   'variable-latency',
   'out-of-order',
   'server-errors',
+  'request-timeout',
   'offline',
   'session-expired',
   'flaky-favorites',
@@ -100,6 +101,9 @@ export const SCENARIOS: Record<ScenarioName, ScenarioConfig> = {
       { id: 'nfts-500', method: 'GET', path: /^\/nfts$/, kind: 'http-error', status: 500, code: 'TRANSIENT', times: 3 },
     ],
   }),
+  'request-timeout': scenario('request-timeout', 'GET /nfts não responde nas 3 primeiras chamadas (inicial + 2 retries): o cliente estoura o timeout de 8s; a 4ª funciona.', {
+    faults: [{ id: 'nfts-timeout', method: 'GET', path: /^\/nfts$/, kind: 'timeout', times: 3 }],
+  }),
   offline: scenario('offline', 'Toda requisição falha na conexão.', {
     faults: [{ id: 'offline', path: /.*/, kind: 'network-error' }],
   }),
@@ -108,7 +112,8 @@ export const SCENARIOS: Record<ScenarioName, ScenarioConfig> = {
   }),
   'flaky-favorites': scenario('flaky-favorites', 'A 1ª mutation de favoritos falha com 503; a seguinte funciona.', {
     faults: [
-      { id: 'fav-503', path: /^\/favorites\//, kind: 'http-error', status: 503, code: 'TRANSIENT', times: 1 },
+      // Só as mutations (PUT/DELETE /favorites/:id): a leitura GET /favorites/nfts não consome a falha.
+      { id: 'fav-503', path: /^\/favorites\/(?!nfts$)/, kind: 'http-error', status: 503, code: 'TRANSIENT', times: 1 },
     ],
   }),
   'price-changed': scenario('price-changed', 'Na 1ª tentativa de pedido o preço sobe 10%: o checkout exige nova confirmação.', {

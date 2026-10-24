@@ -20,6 +20,11 @@ import { Route as AuthProfileRouteImport } from './routes/_auth.profile'
 import { Route as NftsNftIdRouteImport } from './routes/nfts.$nftId'
 import { Route as AuthOrdersOrderIdRouteImport } from './routes/_auth.orders.$orderId'
 import { Route as AuthProfileIndexRouteImport } from './routes/_auth.profile.index'
+import { Route as AuthProfileActivityRouteImport } from './routes/_auth.profile.activity'
+import { Route as AuthProfileDownloadsRouteImport } from './routes/_auth.profile.downloads'
+import { Route as AuthProfileFavoritesRouteImport } from './routes/_auth.profile.favorites'
+import { Route as AuthProfileOffersRouteImport } from './routes/_auth.profile.offers'
+import { Route as AuthProfileSupportRouteImport } from './routes/_auth.profile.support'
 import { Route as AuthProfileWalletsRouteImport } from './routes/_auth.profile.wallets'
 
 const IndexRoute = IndexRouteImport.update({
@@ -76,6 +81,31 @@ const AuthProfileIndexRoute = AuthProfileIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthProfileRoute,
 } as any)
+const AuthProfileActivityRoute = AuthProfileActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
+  getParentRoute: () => AuthProfileRoute,
+} as any)
+const AuthProfileDownloadsRoute = AuthProfileDownloadsRouteImport.update({
+  id: '/downloads',
+  path: '/downloads',
+  getParentRoute: () => AuthProfileRoute,
+} as any)
+const AuthProfileFavoritesRoute = AuthProfileFavoritesRouteImport.update({
+  id: '/favorites',
+  path: '/favorites',
+  getParentRoute: () => AuthProfileRoute,
+} as any)
+const AuthProfileOffersRoute = AuthProfileOffersRouteImport.update({
+  id: '/offers',
+  path: '/offers',
+  getParentRoute: () => AuthProfileRoute,
+} as any)
+const AuthProfileSupportRoute = AuthProfileSupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => AuthProfileRoute,
+} as any)
 const AuthProfileWalletsRoute = AuthProfileWalletsRouteImport.update({
   id: '/wallets',
   path: '/wallets',
@@ -92,6 +122,11 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthProfileRouteWithChildren
   '/nfts/$nftId': typeof NftsNftIdRoute
   '/orders/$orderId': typeof AuthOrdersOrderIdRoute
+  '/profile/activity': typeof AuthProfileActivityRoute
+  '/profile/downloads': typeof AuthProfileDownloadsRoute
+  '/profile/favorites': typeof AuthProfileFavoritesRoute
+  '/profile/offers': typeof AuthProfileOffersRoute
+  '/profile/support': typeof AuthProfileSupportRoute
   '/profile/wallets': typeof AuthProfileWalletsRoute
   '/profile/': typeof AuthProfileIndexRoute
 }
@@ -104,6 +139,11 @@ export interface FileRoutesByTo {
   '/checkout': typeof AuthCheckoutRoute
   '/nfts/$nftId': typeof NftsNftIdRoute
   '/orders/$orderId': typeof AuthOrdersOrderIdRoute
+  '/profile/activity': typeof AuthProfileActivityRoute
+  '/profile/downloads': typeof AuthProfileDownloadsRoute
+  '/profile/favorites': typeof AuthProfileFavoritesRoute
+  '/profile/offers': typeof AuthProfileOffersRoute
+  '/profile/support': typeof AuthProfileSupportRoute
   '/profile/wallets': typeof AuthProfileWalletsRoute
   '/profile': typeof AuthProfileIndexRoute
 }
@@ -119,6 +159,11 @@ export interface FileRoutesById {
   '/_auth/profile': typeof AuthProfileRouteWithChildren
   '/nfts/$nftId': typeof NftsNftIdRoute
   '/_auth/orders/$orderId': typeof AuthOrdersOrderIdRoute
+  '/_auth/profile/activity': typeof AuthProfileActivityRoute
+  '/_auth/profile/downloads': typeof AuthProfileDownloadsRoute
+  '/_auth/profile/favorites': typeof AuthProfileFavoritesRoute
+  '/_auth/profile/offers': typeof AuthProfileOffersRoute
+  '/_auth/profile/support': typeof AuthProfileSupportRoute
   '/_auth/profile/wallets': typeof AuthProfileWalletsRoute
   '/_auth/profile/': typeof AuthProfileIndexRoute
 }
@@ -134,6 +179,11 @@ export interface FileRouteTypes {
     | '/profile'
     | '/nfts/$nftId'
     | '/orders/$orderId'
+    | '/profile/activity'
+    | '/profile/downloads'
+    | '/profile/favorites'
+    | '/profile/offers'
+    | '/profile/support'
     | '/profile/wallets'
     | '/profile/'
   fileRoutesByTo: FileRoutesByTo
@@ -146,6 +196,11 @@ export interface FileRouteTypes {
     | '/checkout'
     | '/nfts/$nftId'
     | '/orders/$orderId'
+    | '/profile/activity'
+    | '/profile/downloads'
+    | '/profile/favorites'
+    | '/profile/offers'
+    | '/profile/support'
     | '/profile/wallets'
     | '/profile'
   id:
@@ -160,6 +215,11 @@ export interface FileRouteTypes {
     | '/_auth/profile'
     | '/nfts/$nftId'
     | '/_auth/orders/$orderId'
+    | '/_auth/profile/activity'
+    | '/_auth/profile/downloads'
+    | '/_auth/profile/favorites'
+    | '/_auth/profile/offers'
+    | '/_auth/profile/support'
     | '/_auth/profile/wallets'
     | '/_auth/profile/'
   fileRoutesById: FileRoutesById
@@ -253,6 +313,41 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthProfileIndexRouteImport
       parentRoute: typeof AuthProfileRoute
     }
+    '/_auth/profile/activity': {
+      id: '/_auth/profile/activity'
+      path: '/activity'
+      fullPath: '/profile/activity'
+      preLoaderRoute: typeof AuthProfileActivityRouteImport
+      parentRoute: typeof AuthProfileRoute
+    }
+    '/_auth/profile/downloads': {
+      id: '/_auth/profile/downloads'
+      path: '/downloads'
+      fullPath: '/profile/downloads'
+      preLoaderRoute: typeof AuthProfileDownloadsRouteImport
+      parentRoute: typeof AuthProfileRoute
+    }
+    '/_auth/profile/favorites': {
+      id: '/_auth/profile/favorites'
+      path: '/favorites'
+      fullPath: '/profile/favorites'
+      preLoaderRoute: typeof AuthProfileFavoritesRouteImport
+      parentRoute: typeof AuthProfileRoute
+    }
+    '/_auth/profile/offers': {
+      id: '/_auth/profile/offers'
+      path: '/offers'
+      fullPath: '/profile/offers'
+      preLoaderRoute: typeof AuthProfileOffersRouteImport
+      parentRoute: typeof AuthProfileRoute
+    }
+    '/_auth/profile/support': {
+      id: '/_auth/profile/support'
+      path: '/support'
+      fullPath: '/profile/support'
+      preLoaderRoute: typeof AuthProfileSupportRouteImport
+      parentRoute: typeof AuthProfileRoute
+    }
     '/_auth/profile/wallets': {
       id: '/_auth/profile/wallets'
       path: '/wallets'
@@ -264,11 +359,21 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthProfileRouteChildren {
+  AuthProfileActivityRoute: typeof AuthProfileActivityRoute
+  AuthProfileDownloadsRoute: typeof AuthProfileDownloadsRoute
+  AuthProfileFavoritesRoute: typeof AuthProfileFavoritesRoute
+  AuthProfileOffersRoute: typeof AuthProfileOffersRoute
+  AuthProfileSupportRoute: typeof AuthProfileSupportRoute
   AuthProfileWalletsRoute: typeof AuthProfileWalletsRoute
   AuthProfileIndexRoute: typeof AuthProfileIndexRoute
 }
 
 const AuthProfileRouteChildren: AuthProfileRouteChildren = {
+  AuthProfileActivityRoute: AuthProfileActivityRoute,
+  AuthProfileDownloadsRoute: AuthProfileDownloadsRoute,
+  AuthProfileFavoritesRoute: AuthProfileFavoritesRoute,
+  AuthProfileOffersRoute: AuthProfileOffersRoute,
+  AuthProfileSupportRoute: AuthProfileSupportRoute,
   AuthProfileWalletsRoute: AuthProfileWalletsRoute,
   AuthProfileIndexRoute: AuthProfileIndexRoute,
 }

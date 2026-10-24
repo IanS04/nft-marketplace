@@ -102,6 +102,24 @@ test.describe('12. carregamento, falha e recuperação', () => {
     await expect(page.getByTestId('nft-grid').getByTestId('skeleton')).toHaveCount(0)
   })
 
+  test('timeout: skeleton enquanto espera, erro após estourar o tempo e recuperação', async ({ page }) => {
+    // Relógio controlado: os 3 timeouts de 8s (inicial + 2 retries) passam sem esperar 24s de verdade.
+    await page.clock.install()
+    await resetScenario(page, 'request-timeout')
+    await expect(page.getByTestId('nft-grid-loading').getByTestId('skeleton').first()).toBeVisible()
+    const alert = page.getByRole('alert').filter({ hasText: 'Não foi possível carregar os NFTs' })
+    await expect
+      .poll(async () => {
+        await page.clock.fastForward(2_000)
+        return alert.isVisible()
+      }, { timeout: 30_000, intervals: [100] })
+      .toBe(true)
+    await expect(alert).toContainText('A requisição demorou demais')
+    await alert.getByRole('button', { name: 'Tentar novamente' }).click()
+    await page.clock.fastForward(1_000) // latência do cenário (80ms)
+    await expect(page.getByTestId('nft-grid')).toBeVisible()
+  })
+
   test('falha do servidor mostra erro e "Tentar novamente" recupera', async ({ page }) => {
     await resetScenario(page, 'server-errors') // GET /nfts: 3 falhas (inicial + 2 retries automáticos), a 4ª passa
     const alert = page.getByRole('alert').filter({ hasText: 'Não foi possível carregar os NFTs' })

@@ -5,6 +5,7 @@ import { authenticate } from '../auth-guard'
 import { withConditions } from '../chaos'
 import { mockDb } from '../db/db'
 import { apiError } from '../http-utils'
+import { toSummary } from './nfts'
 
 const listFor = (userId: string): NftId[] => mockDb.read().favorites[userId] ?? []
 
@@ -13,6 +14,18 @@ export const favoriteHandlers = [
     const auth = authenticate(request)
     if (auth instanceof Response) return auth
     return HttpResponse.json({ nftIds: listFor(auth.userId) })
+  })),
+
+  /** Lista de interesse: os NFTs favoritados (resumo do catálogo, na ordem em que foram favoritados). */
+  http.get(apiUrl('/favorites/nfts'), withConditions(({ request }) => {
+    const auth = authenticate(request)
+    if (auth instanceof Response) return auth
+    const records = new Map(mockDb.read().nfts.map((r) => [r.nft.id, r.nft]))
+    const items = listFor(auth.userId).flatMap((id) => {
+      const nft = records.get(id)
+      return nft ? [toSummary(nft)] : []
+    })
+    return HttpResponse.json({ items })
   })),
 
   http.put(apiUrl('/favorites/:nftId'), withConditions(({ request, params }) => {

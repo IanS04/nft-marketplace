@@ -11,7 +11,7 @@
 - Trabalhe em **etapas modulares**, nunca o projeto inteiro de uma vez. Cada etapa: código completo e tipado, com caminho (`/src/...`), testes Playwright da etapa e checklist de aceitação.
 - Use a task list para etapas com várias tarefas; o último item é sempre **verificar** (typecheck, lint, teste rodando, tela conferida).
 - Explique decisões não óbvias em 1–2 frases. O Ian está aprendendo: prefira clareza a esperteza.
-- O código das Etapas 1 e 2 foi escrito no chat **sem ser executado nem compilado**. Primeira ação: validar (seção 9).
+- Etapas 1–11 concluídas (seção 4). Manter typecheck, lint, build e E2E verdes a cada mudança.
 
 ## 2. O desafio em resumo
 
@@ -88,7 +88,7 @@ Pendências conhecidas: logout no mobile entra com a sidebar do perfil (Etapa 6)
 
 ### Etapa 5 — detalhe + favoritos + carrinho, validada (2026-10-24)
 **Contratos novos** (`schemas/cart.ts`, `schemas/quote.ts`, handlers em `mocks/handlers/cart.ts`, regras puras em `mocks/domain/cart.ts`): `GET /cart` · `POST /cart/items` · `PATCH|DELETE /cart/items/:itemId` (id = `ci_<editionId>`) · `PUT|DELETE /cart/coupon` · `POST /cart/merge` (login) · `POST /quote {network}` · `GET /nfts/featured`. Carrinho do usuário pelo token; do visitante pelo header `X-Cart-Id` (`lib/guest-cart.ts`, `kurio:guest-cart-id`). Toda mutation devolve o `Cart` (vai direto ao cache); `Cart.couponCode` persiste o cupom; `version` muda a cada alteração e entra na chave da cotação. Cupons fixos (`mocks/fixtures/coupons.ts`): `KURIO10` (10%), `LANCAMENTO` (0.5 ETH), `EXPIRADO`; outro código → `COUPON_INVALID`. Taxa: ethereum 0.016 / polygon 0.002 / solana 0.001 (zero com carrinho vazio). Disponibilidade: `maxQuantityFor = min(maxPerOrder, available)`, excesso → 409 `AVAILABILITY_CONFLICT`. Cotações guardadas em `db.quotes` (Etapa 6 usa no pedido). `SCHEMA_VERSION = 3`.
-**Cliente**: `features/cart` (`useCartTarget` decide usuário/visitante/expirado; `useCart`, `useQuote` com `keepPreviousData`; mutations; `CartSessionBridge` faz o merge só na transição anonymous→authenticated; `CartCountBadge`), `features/favorites` (`useFavorites`, `useToggleFavorite` = **otimista com rollback**, `FavoriteButton` com `aria-pressed`), `features/nft-detail` (rota com `loader` + `ensureQueryData` + `notFound()`, `pendingComponent` skeleton, `useSuspenseQuery`; galeria com zoom, `EditionPicker` com rádios nativos, limite = estoque − já no carrinho). `NftCard` tem slot `overlay`; `MarketCard` injeta o favorito; `NftRail` (vitrines). Resumo do carrinho = só valores da cotação. Mobile: detalhe e carrinho são telas focadas (sem tab bar/rodapé, barra de ação própria); toasts com `mobileOffset` para não cobrir os botões sobre a imagem.
+**Cliente**: `features/cart` (`useCartTarget` decide usuário/visitante/expirado; `useCart`, `useQuote` com `keepPreviousData`; mutations; `CartSessionBridge` faz o merge pelo estado autenticado + carrinho de visitante pendente — corrigido na Etapa 9; `CartCountBadge`), `features/favorites` (`useFavorites`, `useToggleFavorite` = **otimista com rollback**, `FavoriteButton` com `aria-pressed`), `features/nft-detail` (rota com `loader` + `ensureQueryData` + `notFound()`, `pendingComponent` skeleton, `useSuspenseQuery`; galeria com zoom, `EditionPicker` com rádios nativos, limite = estoque − já no carrinho). `NftCard` tem slot `overlay`; `MarketCard` injeta o favorito; `NftRail` (vitrines). Resumo do carrinho = só valores da cotação. Mobile: detalhe e carrinho são telas focadas (sem tab bar/rodapé, barra de ação própria); toasts com `mobileOffset` para não cobrir os botões sobre a imagem.
 **Testes**: `e2e/specs/detail-favorites.spec.ts` (itens 2 e 4), `e2e/specs/cart.spec.ts` (item 5), helpers `e2e/fixtures/cart.ts`. Lições: após clique otimista, esperar a confirmação (live region/toast) antes de `reload`/`goto`, senão a requisição é abortada (o handler MSW roda na página). Suíte: 111 testes, estável com `--repeat-each=2`.
 
 ### Etapa 6 — checkout + pedidos + perfil + carteiras, validada (2026-10-24)
@@ -125,6 +125,17 @@ Otimizações: render imediato com **porta de rede** (`app/network-ready.ts`: Ax
 ### Etapa 10 (parte 3) — deploy validado (2026-10-24)
 Publicado em **https://nft-marketplace-drab-chi.vercel.app** (Vercel, branch `main`; cada push gera deploy). Conferido: acesso direto/refresh em rotas profundas (rewrite SPA), `mockServiceWorker.js` com `no-cache`, `/assets` imutável. `pnpm test:e2e:deploy` (`playwright.deploy.config.ts`, sem webServer, timeout 45s, `E2E_BASE_URL` opcional) roda a suíte inteira contra o site: 237 passaram, 11 skips, 1 falha pontual (o download de um chunk de rota não respondeu na rede até a Vercel; o mesmo teste passou 9/9 ao repetir).
 
+### 4.1 Auditoria de conformidade (2026-10-24)
+Nenhum eliminatório encontrado. Lacunas apontadas e **resolvidas na Etapa 11**: 403 nunca emitido, falha `timeout` sem cenário, expiração no checkout sem teste, "Lista de interesse" indisponível. Resta só: Lighthouse mobile ~75–77 (meta 90), justificado no `ARCHITECTURE.md`; chunk principal 620 kB (201 kB gzip) ainda pode ser dividido.
+
+### Etapa 11 — seções da conta + pendências da auditoria (2026-10-24)
+Pedido do Ian: implementar **todos** os itens da sidebar "Meu perfil", inclusive os que o enunciado põe fora da entrega (atividade, ofertas, downloads, suporte), de ponta a ponta. Rotas privadas filhas de `/profile`: `activity`, `favorites`, `offers`, `downloads`, `support`.
+**Contratos** (`types/member.ts`, `schemas/member.ts`, `mocks/handlers/member.ts`, regras em `mocks/domain/member.ts`, endpoints em `services/api/endpoints/member.ts`): `GET /favorites/nfts` · `GET /activity` (derivada no servidor de pedidos, downloads e chamados) · `GET /offers` (= cupons de `fixtures/coupons.ts`, agora com título/descrição/validade) · `GET /downloads` + `POST /downloads/:id` (registra e devolve `{item, url, fileName}`; arquivo de outro usuário → 403) · `GET|POST /support/tickets` (protocolo `KUR-00xxxx`; `orderId` alheio → 422 em `fieldErrors.orderId`) · `GET /orders` (todos). `PUT /wallets/:id` de outro usuário → **403 `FORBIDDEN`**. `SCHEMA_VERSION = 6` (`downloads`, `tickets`).
+**Cliente**: hooks em `features/account/hooks/use-member.ts` (atividade e downloads com `staleTime: 0`) e `useFavoriteNfts` (lista filtrada pelos ids otimistas → remover some na hora e volta no rollback). Chaves: `favoriteNfts` sob `favorites`, `activity`, `downloads`, `supportTickets`; `offers` público. `nft.updated` atualiza a lista de interesse; `order.updated` invalida atividade e downloads; reconciliação inclui favoritos/atividade/downloads. Sidebar sem `<Unavailable>`; tab bar (coração → lista) e rodapé (Atividade, Lista de interesse, Central de ajuda) ligados. `lib/date.ts`, `lib/download.ts`, `SectionHeader`.
+**Cenário novo** `request-timeout` (GET /nfts não responde 3×). `flaky-favorites` agora só pega mutations (`/^\/favorites\/(?!nfts$)/`) — a GET da lista consumia a falha.
+**Bugs reais corrigidos** (achados pelo teste de expiração no checkout): (1) o `CheckoutPage` trocava o formulário pelo `ErrorState` quando a revisão recebia 401, apagando o que foi digitado → erro de tela cheia só sem dados em cache; (2) a revisão ficava presa em "Sua sessão expirou" após o novo login → `OrderReviewDialog` refaz a conferência quando a sessão volta.
+**Testes**: `member.spec.ts` (lista com rollback/isolamento, compra → download registrado → atividade, ofertas, suporte, guard), `catalog.spec.ts` (timeout com `page.clock`), `auth.spec.ts` (expiração no checkout), `data-layer.spec.ts` (403 e 401 das seções), `a11y.spec.ts` (axe nas 5 telas + reflow 320px). Lição: botão com `aria-label` diferente do texto visível reprova no axe (`label-content-name-mismatch`) → complemento em `sr-only`; `opacity` em card derruba contraste.
+
 ## 5. Decisões de arquitetura (não reverter sem conversar)
 
 **Tipos (`src/types`)**: IDs com `Brand<string,'X'>`; `DecimalString` branded; `ApiErrorCode` derivado de `API_ERROR_CODES` (inclui `INVALID_CREDENTIALS`); `Order` é união discriminada (`PendingOrder | ConfirmedOrder | RejectedOrder`); `OrderReceipt = ConfirmedOrder`; eventos em `realtime.ts` com envelope `{eventId, type, resource, version, occurredAt, userId?, payload}`.
@@ -152,15 +163,15 @@ Publicado em **https://nft-marketplace-drab-chi.vercel.app** (Vercel, branch `ma
 - Todo handler é envolvido por `withConditions(...)` (latência + falhas do cenário ativo).
 - Banco em memória persistido em `localStorage` (`kurio:mock-db:v1`), `reset()` restaura estado conhecido. `authenticate(request)` retorna `AuthContext | Response`.
 - Senhas no mock: SHA-256 + salt (não é KDF real; documentar limitação).
-- Cenários (`mocks/scenarios`): `default` (80ms; usar em demo/Lighthouse/visual), `empty-catalog`, `slow-network` (1,5s), `variable-latency`, `out-of-order`, `server-errors` (GET /nfts falha 3× e a 4ª passa), `offline`, `session-expired` (401 na 4ª requisição autenticada), `flaky-favorites` (1ª mutation 503). **Faltam**: `coupon-invalid`, `price-changed`, `sold-out-at-checkout`, `order-timeout` (timeout **após** criar pedido), `payment-declined`.
+- Cenários (`mocks/scenarios`): `default` (80ms; usar em demo/Lighthouse/visual), `empty-catalog`, `slow-network` (1,5s), `variable-latency`, `out-of-order`, `server-errors` (GET /nfts falha 3× e a 4ª passa), `request-timeout` (GET /nfts não responde 3×), `offline`, `session-expired` (401 na 4ª requisição autenticada), `flaky-favorites` (1ª mutation 503; só PUT/DELETE), `price-changed`, `sold-out-at-checkout`, `order-timeout` (timeout **após** criar pedido), `payment-declined`, `wallet-rejected`. Cupom inválido/expirado não tem cenário próprio: é determinístico pelos códigos (`QUALQUER`, `EXPIRADO`).
 - Seleção: `?scenario=` > localStorage > `VITE_MOCK_SCENARIO` > `default`.
 - Controle em runtime: `window.__kurioMocks` → `scenarios`, `scenario()`, `setScenario(n)`, `reset(n?)` (limpa `kurio:*` e reseta banco; **recarregar a página depois**), `expireSession()`.
 - Fixtures: 36 NFTs determinísticos (PRNG com seed). Os 9 primeiros reproduzem o Figma (Emerald Ape #042 1.19, Sage Nomad #009 1.69, Neon Vessel #552 1.99 riscado 2.29 raro, Cosmic Bloom #118 1.29, Violet Nomad #314 1.39, Ivory Baron #088 1.79, Golden Beat #207 0.99, Golden Frequency #071 0.59, Golden Signal #160 0.39). Ids no formato `emerald-ape-042`; edições `${nftId}--1of1|1of10|1of50|open`. Neon Vessel 1/1 está **esgotada** de propósito (cenário "edição indisponível"). Conferência com o Figma: 2×1.19 + 6×1.39 + 9×1.79 = 26.83; +0.016 de taxa = 26.846.
 - **Credenciais fictícias**: `ana@kurio.dev / Kurio@123` (tem 2 favoritos: emerald-ape-042, ivory-baron-088) · `leo@kurio.dev / Kurio@456` (sem favoritos, serve para provar isolamento).
 
 **Contratos REST (mínimo exigido)** — prefixo `/api`:
-`POST /auth/register|login|logout` · `GET /auth/session` · `GET /nfts` (q, tab, categories, networks, minPrice, maxPrice, sort, page, pageSize) · `GET /nfts/:id` · `GET /favorites` · `PUT|DELETE /favorites/:nftId` (idempotentes, devolvem `{nftIds}`) · **a criar:** carrinho (consulta/inclusão/alteração/remoção), cotação (cupom, disponibilidade, descontos, taxa, total), pedidos (criar idempotente + consultar estado/recibo), perfil (dados, avatar, senha), carteiras (consultar, cadastrar, atualizar).
-Erros: `VALIDATION_ERROR(422, fieldErrors) · INVALID_CREDENTIALS(401) · UNAUTHENTICATED(401) · SESSION_EXPIRED(401) · FORBIDDEN(403) · NOT_FOUND(404) · CONFLICT(409) · AVAILABILITY_CONFLICT(409) · IDEMPOTENCY_CONFLICT(409) · COUPON_INVALID/EXPIRED(422) · QUOTE_STALE(409) · TRANSIENT(5xx, retryable) · NETWORK_ERROR`.
+`POST /auth/register|login|logout` · `GET /auth/session` · `GET /nfts` (q, tab, categories, networks, minPrice, maxPrice, sort, page, pageSize) · `GET /nfts/featured` · `GET /nfts/:id` · `GET /favorites` · `PUT|DELETE /favorites/:nftId` (idempotentes, devolvem `{nftIds}`) · carrinho, cotação, pedidos, perfil e carteiras conforme Etapas 5 e 6 (seção 4). Referência completa: `ARCHITECTURE.md` §2.
+Erros: `VALIDATION_ERROR(422, fieldErrors) · INVALID_CREDENTIALS(401) · UNAUTHENTICATED(401) · SESSION_EXPIRED(401) · FORBIDDEN(403: carteira ou arquivo de outro usuário) · NOT_FOUND(404) · CONFLICT(409) · AVAILABILITY_CONFLICT(409) · IDEMPOTENCY_CONFLICT(409) · COUPON_INVALID/EXPIRED(422) · QUOTE_STALE(409) · WALLET_REJECTED(409) · TRANSIENT(5xx, retryable) · NETWORK_ERROR`.
 
 **Rotas (TanStack Router, file-based)**: `/` · `/nfts/$nftId` · `/cart` · `_auth` (guard com `?redirect=`) → `/checkout`, `/orders/$orderId`, `/profile` (layout com sidebar) → `/profile` e `/profile/wallets` · `/login` e `/register` (modal ≥md, página cheia no mobile) · `$` (404). Rotas privadas protegidas em `beforeLoad`.
 
@@ -207,12 +218,14 @@ Raios: sm 4 · md 6 (botões) · lg 12 (cards) · xl 20 · 2xl 32 (containers mo
 - Erros de validação da API (`fieldErrors`) mapeados para os campos do React Hook Form.
 - Commits pequenos por tarefa; não alterar arquivos fora do escopo da etapa sem avisar.
 
-## 8. Comandos esperados (criar no `package.json`)
+## 8. Comandos (`package.json`)
 
-`dev` (mocks ligados) · `build` · `preview` · `typecheck` (`tsc --noEmit`) · `lint` · `test:e2e` (Playwright) · `test:e2e:update` (baselines visuais) · `audit:lighthouse` · `npx msw init public/ --save` (uma vez).
+`dev` (mocks ligados) · `build` · `preview` · `typecheck` (`tsc --noEmit`) · `lint` · `test:e2e` (Playwright, contra `vite build && vite preview`) · `test:e2e:visual` · `test:e2e:update` (baselines visuais) · `test:e2e:deploy` (contra o site publicado) · `audit:lighthouse` · `assets` (gera WebP das artes).
 Playwright: Chromium, projetos desktop (1440), tablet (768) e mobile (390); relatório HTML + traces; cada teste parte de estado isolado (`__kurioMocks.reset` + reload, ou `?scenario=`), relógio e latência controlados.
 
-## 9. Primeiras ações (validação antes de seguir)
+## 9. Primeiras ações (histórico — concluído na Etapa 2)
+
+Mantido como registro; não precisa ser refeito.
 
 1. Conferir se os arquivos da Etapa 2 existem (árvore da seção 4). Se faltarem, avise o Ian: o código foi gerado no chat e precisa ser colado ou reenviado; não o reescreva de memória.
 2. Rodar `pnpm install`, `pnpm typecheck`, `pnpm lint` e corrigir erros. Pontos de atenção conhecidos:
@@ -224,6 +237,8 @@ Playwright: Chromium, projetos desktop (1440), tablet (768) e mobile (390); rela
 4. Só então começar a Etapa 3.
 
 ## 10. Roadmap (cada etapa inclui seus testes Playwright)
+
+Todas as etapas abaixo estão concluídas (mais a Etapa 11, seção 4); pendências restantes na seção 4.1.
 
 | Etapa | Escopo | Aceite principal |
 | --- | --- | --- |
@@ -238,6 +253,6 @@ Playwright: Chromium, projetos desktop (1440), tablet (768) e mobile (390); rela
 
 Cobertura E2E exigida (12 itens): busca/filtros/ordem/paginação/histórico · detalhe direto e inexistente · cadastro/login/expiração/logout/troca de usuário · favoritos com falha e recuperação · carrinho (quantidades, remoção, cupom, persistência após refresh/login) · compra completa até o recibo · falha de pagamento, clique repetido e timeout com recuperação do mesmo pedido · perfil/avatar/senha/carteiras com erros · mudança de preço/disponibilidade via Socket.IO durante checkout · eventos duplicados/antigos, desconexão e retomada de pedido pendente · teclado, foco de diálogos e validação · skeletons com carregamento lento e retry.
 
-## 11. Prompt sugerido para começar no Claude Code
+## 11. Prompt sugerido para retomar no Claude Code
 
-> Leia `CLAUDE.md` e `docs/DESAFIO.md`. Execute a seção 9 (validar Etapas 1 e 2: instalar, typecheck, lint, smoke test) e corrija o que quebrar, explicando cada correção. Depois proponha o plano detalhado da Etapa 3 (shell + catálogo) em tarefas, com os testes Playwright da etapa, e aguarde meu OK antes de codar.
+> Leia `CLAUDE.md` e `docs/DESAFIO.md`. Confira o estado (typecheck, lint, E2E) e proponha o próximo passo; aguarde meu OK antes de codar.

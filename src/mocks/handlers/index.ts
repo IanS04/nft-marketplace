@@ -2,6 +2,7 @@ import { realtimeHandlers } from '../realtime/socket-handler'
 import { authHandlers } from './auth'
 import { cartHandlers } from './cart'
 import { favoriteHandlers } from './favorites'
+import { memberHandlers } from './member'
 import { nftHandlers } from './nfts'
 import { orderHandlers } from './orders'
 import { profileHandlers } from './profile'
@@ -15,5 +16,6 @@ export const handlers = [
   ...walletHandlers,
   ...profileHandlers,
   ...orderHandlers,
+  ...memberHandlers,
   ...realtimeHandlers,
 ]

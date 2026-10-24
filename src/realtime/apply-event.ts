@@ -28,6 +28,8 @@ export class EventGuard {
 export const isCartKey = (key: QueryKey) =>
   key.length === 3 && ((key[0] === 'user' && key[2] === 'cart') || (key[0] === 'cart' && key[1] === 'guest'))
 
+const isFavoriteNftsKey = (key: QueryKey) => key[0] === 'user' && key[2] === 'favorites' && key[3] === 'nfts'
+
 export interface NftUpdateEffect {
   name: string | null
   inCart: boolean
@@ -75,6 +77,8 @@ export function applyNftUpdated(queryClient: QueryClient, event: NftUpdatedEvent
     old && { ...old, items: old.items.map(patchSummary) },
   )
   queryClient.setQueryData<NftSummary[]>(queryKeys.nfts.featured(), (old) => old?.map(patchSummary))
+  // Lista de interesse: ['user', id, 'favorites', 'nfts'] (só existe no cache do usuário atual).
+  queryClient.setQueriesData<NftSummary[]>({ predicate: (q) => isFavoriteNftsKey(q.queryKey) }, (old) => old?.map(patchSummary))
 
   let inCart = false
   const soldOutInCart: string[] = []
@@ -97,6 +101,8 @@ export function reconcileActiveQueries(queryClient: QueryClient): Promise<void> 
   return queryClient.invalidateQueries({
     refetchType: 'active',
     predicate: ({ queryKey: [first, , third] }) =>
-      first === 'nfts' || first === 'cart' || (first === 'user' && (third === 'cart' || third === 'orders')),
+      first === 'nfts' ||
+      first === 'cart' ||
+      (first === 'user' && (third === 'cart' || third === 'orders' || third === 'favorites' || third === 'activity' || third === 'downloads')),
   })
 }

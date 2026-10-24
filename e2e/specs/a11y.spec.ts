@@ -85,6 +85,27 @@ test.describe('auditoria axe: telas privadas', () => {
     await expect(page.getByRole('form', { name: 'Carteira principal' })).toBeVisible()
     await expectAccessible(page)
   })
+
+  test('lista de interesse, atividade, ofertas, arquivos e suporte', async ({ page }) => {
+    await login(page, ANA)
+    const sections = [
+      ['/profile/favorites', 'Lista de interesse'],
+      ['/profile/activity', 'Atividade'],
+      ['/profile/offers', 'Ofertas'],
+      ['/profile/downloads', 'Arquivos baixados'],
+      ['/profile/support', 'Suporte'],
+    ] as const
+    for (const [path, title] of sections) {
+      await page.goto(path)
+      await expect(page.getByRole('heading', { level: 1, name: title })).toBeVisible()
+      await expect(page.locator('[aria-busy="true"]')).toHaveCount(0)
+      await expectAccessible(page)
+    }
+    // Formulário de suporte com erros visíveis.
+    await page.getByRole('button', { name: 'Abrir chamado' }).click()
+    await expect(page.getByRole('textbox', { name: 'Título' })).toHaveAttribute('aria-invalid', 'true')
+    await expectAccessible(page)
+  })
 })
 
 test.describe('reflow a 320px (zoom de 400%)', () => {
@@ -102,7 +123,7 @@ test.describe('reflow a 320px (zoom de 400%)', () => {
     }
     await login(page, ANA)
     await buyFromDetail(page, 'emerald-ape-042')
-    for (const path of ['/cart', '/checkout', '/profile', '/profile/wallets']) {
+    for (const path of ['/cart', '/checkout', '/profile', '/profile/wallets', '/profile/favorites', '/profile/activity', '/profile/offers', '/profile/downloads', '/profile/support']) {
       await page.goto(path)
       await page.waitForLoadState('networkidle')
       await expectNoHorizontalOverflow(page)

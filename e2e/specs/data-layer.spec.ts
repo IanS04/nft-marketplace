@@ -154,3 +154,31 @@ test.describe('pedidos: idempotência e isolamento', () => {
     expect((await callApi(page, `/api/orders/${first.body.id}`, { token: ana })).status).toBe(200)
   })
 })
+
+test.describe('permissão', () => {
+  test.beforeEach(async ({ page }) => setup(page))
+
+  test('alterar a carteira de outro usuário devolve 403; inexistente, 404', async ({ page }) => {
+    const leo = await login(page, 'leo@kurio.dev', 'Kurio@456')
+    const input = {
+      role: 'primary', displayName: 'Leo', nickname: 'Invasor', network: 'ethereum',
+      address: '0x1111111111111111111111111111111111111111', ensName: null, secondaryReference: null,
+      provider: 'metamask', profileName: 'leo.kurio', referralCode: 'KURIO-LEO', email: 'leo@kurio.dev',
+    }
+    const foreign = await callApi<{ code: string }>(page, '/api/wallets/wal_ana_primary', { method: 'PUT', token: leo, body: input })
+    expect(foreign.status).toBe(403)
+    expect(foreign.body.code).toBe('FORBIDDEN')
+    expect((await callApi(page, '/api/wallets/wal_nao_existe', { method: 'PUT', token: leo, body: input })).status).toBe(404)
+
+    // A carteira da Ana continua intacta.
+    const ana = await login(page, 'ana@kurio.dev', 'Kurio@123')
+    const wallets = await callApi<{ items: { id: string; nickname: string }[] }>(page, '/api/wallets', { token: ana })
+    expect(wallets.body.items.find((w) => w.id === 'wal_ana_primary')?.nickname).toBe('Principal')
+  })
+
+  test('seções da conta exigem sessão (401)', async ({ page }) => {
+    for (const path of ['/api/favorites/nfts', '/api/activity', '/api/offers', '/api/downloads', '/api/support/tickets']) {
+      expect((await callApi(page, path)).status, path).toBe(401)
+    }
+  })
+})

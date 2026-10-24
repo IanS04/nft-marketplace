@@ -66,7 +66,7 @@ function buildFacets(all: NftRecord[], q: NftListQuery): NftListResponse['facets
   }
 }
 
-function toSummary(n: Nft): NftSummary {
+export function toSummary(n: Nft): NftSummary {
   const { id, name, tokenId, image, price, compareAtPrice, rarity, category, network, isFeatured, isNew, isTrending, version } = n
   return { id, name, tokenId, image, price, compareAtPrice, rarity, category, network, isFeatured, isNew, isTrending, version }
 }

@@ -1,5 +1,6 @@
 import { ANA, LEO, expectLoggedIn, fillLogin, login, openLogin } from '../fixtures/auth'
 import { isMobile } from '../fixtures/catalog'
+import { connectWallet, goToCheckout, openReview } from '../fixtures/checkout'
 import { expect, resetScenario, test } from '../fixtures/test'
 
 // Etapa 4 — item 3 (cadastro, login, expiração, logout, troca de usuário) e parte do 11 (diálogo/teclado/validação).
@@ -83,6 +84,33 @@ test.describe('3. rotas privadas e expiração', () => {
     await form.getByLabel('Senha', { exact: true }).fill(ANA.password)
     await form.getByRole('button', { name: 'Entrar', exact: true }).click()
     await expect(page).toHaveURL('/profile/wallets')
+  })
+
+  test('sessão expira durante o checkout: reautentica e retoma com o formulário preenchido', async ({ page }) => {
+    await goToCheckout(page)
+    await connectWallet(page)
+    if (isMobile(page)) await page.getByText('Perfil do colecionador', { exact: false }).first().click()
+    const name = page.getByRole('textbox', { name: 'Nome de exibição' })
+    await name.fill('Ana Retomada')
+
+    await page.evaluate(() => window.__kurioMocks!.expireSession())
+    await page.getByRole('button', { name: 'Confirmar compra' }).click()
+    const dialog = page.getByRole('dialog', { name: 'Sua sessão expirou' })
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByRole('textbox', { name: 'E-mail' })).toHaveValue(ANA.email)
+    await dialog.getByLabel('Senha', { exact: true }).fill(ANA.password)
+    await dialog.getByRole('button', { name: 'Entrar', exact: true }).click()
+    await expect(dialog).toBeHidden()
+
+    // Retomada: a revisão que falhou com 401 é refeita e abre sozinha, com valores do servidor.
+    await expect(page).toHaveURL('/checkout')
+    const review = page.getByRole('dialog', { name: 'Revise seu pedido' })
+    await expect(review.getByTestId('review-total')).toHaveText('1.206 ETH')
+    // Mesmo formulário: o que foi digitado continua lá.
+    await page.keyboard.press('Escape')
+    await expect(review).toBeHidden()
+    await expect(name).toHaveValue('Ana Retomada')
+    await expect((await openReview(page)).getByTestId('review-total')).toHaveText('1.206 ETH')
   })
 
   test('sessão expira parada na tela: reautentica sem perder o contexto', async ({ page }) => {

@@ -86,6 +86,9 @@ export function RealtimeProvider() {
         const keys = queryKeys.user(userId)
         void queryClient.invalidateQueries({ queryKey: keys.order(event.payload.orderId) })
         void queryClient.invalidateQueries({ queryKey: keys.pendingOrders })
+        // Histórico e arquivos dependem do estado do pedido (confirmado libera o download).
+        void queryClient.invalidateQueries({ queryKey: keys.activity })
+        void queryClient.invalidateQueries({ queryKey: keys.downloads })
         if (event.payload.status === 'confirmed') {
           void queryClient.invalidateQueries({ queryKey: keys.cart }) // os itens comprados saíram
           toast.success('Pagamento confirmado!', { description: 'Seus NFTs estão na sua carteira.' })

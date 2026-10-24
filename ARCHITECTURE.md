@@ -40,6 +40,7 @@ Prefixo `/api`. Respostas validadas com Zod. Rotas privadas exigem `Authorizatio
 | | `GET /nfts/featured` | – | → `{items}` | – |
 | | `GET /nfts/:id` | – | → `Nft` (edições, galeria, atributos) | 404 |
 | Favoritos | `GET /favorites` | ✔ | → `{nftIds}` | 401 |
+| | `GET /favorites/nfts` | ✔ | → `{items: NftSummary[]}` (lista de interesse) | 401 |
 | | `PUT` / `DELETE /favorites/:nftId` | ✔ | idempotentes → `{nftIds}` | 404 |
 | Carrinho | `GET /cart` | ✔ ou `X-Cart-Id` | → `Cart` | 400 (sem identificação) |
 | | `POST /cart/items` | ✔ ou `X-Cart-Id` | `{nftId, editionId, quantity}` → `Cart` | 404, 409 `AVAILABILITY_CONFLICT` |
@@ -49,16 +50,23 @@ Prefixo `/api`. Respostas validadas com Zod. Rotas privadas exigem `Authorizatio
 | | `POST /cart/merge` | ✔ + `X-Cart-Id` | carrinho do visitante → carrinho da conta | 401 |
 | Cotação | `POST /quote` | ✔ ou `X-Cart-Id` | `{network}` → `Quote` (linhas, subtotal, desconto, taxa, total, problemas) | 422 |
 | Pedidos | `POST /orders` | ✔ + `Idempotency-Key` | `{quoteId, cartVersion, walletId, provider, network, collector}` → `Order` (201; **200** se a mesma chave já criou) | 400, 404, 409 `QUOTE_STALE` / `AVAILABILITY_CONFLICT` / `IDEMPOTENCY_CONFLICT` / `CONFLICT` (carteira desconectada) |
-| | `GET /orders?status=pending` | ✔ | → `{items}` | 401 |
+| | `GET /orders` / `GET /orders?status=pending` | ✔ | → `{items}` (do usuário, mais recentes primeiro) | 401 |
 | | `GET /orders/:id` | ✔ | → `Order` (de outro usuário → 404) | 404 |
 | Perfil | `GET` / `PATCH /profile` | ✔ | `{displayName, username, email, ensName, walletNickname?}` → `User` | 422, 409 (`fieldErrors`) |
 | | `PUT` / `DELETE /profile/avatar` | ✔ | `{dataUrl}` (PNG/JPEG/WebP ≤ 400 KB) → `User` | 422 |
 | | `POST /profile/password` | ✔ | `{currentPassword, newPassword}` → 204 | 422 (`fieldErrors.currentPassword`) |
 | Carteiras | `GET` / `POST /wallets` | ✔ | `WalletInput` → `Wallet` (201) | 422, 409 (papel já cadastrado) |
-| | `PUT /wallets/:id` | ✔ | `WalletInput` → `Wallet` | 404, 422 |
+| | `PUT /wallets/:id` | ✔ | `WalletInput` → `Wallet` | 403 `FORBIDDEN` (carteira de outro usuário), 404, 422 |
 | | `POST` / `DELETE /wallets/:id/connection` | ✔ | `{provider, network}` → `WalletConnection` | 409 `WALLET_REJECTED` |
+| Atividade | `GET /activity` | ✔ | → `{items: ActivityItem[]}` (pedidos, pagamentos, downloads e chamados) | 401 |
+| Ofertas | `GET /offers` | ✔ | → `{items: Offer[]}` (cupons publicados, ativos e expirados) | 401 |
+| Arquivos | `GET /downloads` | ✔ | → `{items: DownloadItem[]}` (edições de pedidos confirmados) | 401 |
+| | `POST /downloads/:id` | ✔ | registra o download → `{item, url, fileName}` | 403 `FORBIDDEN` (arquivo de outro usuário), 404 |
+| Suporte | `GET` / `POST /support/tickets` | ✔ | `{category, subject, orderId?, message}` → `SupportTicket` (201, com protocolo) | 422 (`fieldErrors`, inclusive pedido que não é do usuário) |
 
 **Formato de erro** (`ApiErrorBody`): `{ code, message, status, retryable, fieldErrors?, details? }`. Códigos: `VALIDATION_ERROR` 422 · `INVALID_CREDENTIALS` 401 · `UNAUTHENTICATED` 401 · `SESSION_EXPIRED` 401 · `FORBIDDEN` 403 · `NOT_FOUND` 404 · `CONFLICT` 409 · `AVAILABILITY_CONFLICT` 409 · `IDEMPOTENCY_CONFLICT` 409 · `COUPON_INVALID`/`COUPON_EXPIRED` 422 · `QUOTE_STALE` 409 · `WALLET_REJECTED` 409 · `TRANSIENT` 5xx (retryable) · `NETWORK_ERROR` (sem resposta). O interceptor do Axios converte qualquer falha em `ApiError`. Os `fieldErrors` são levados aos campos do formulário (`lib/form-errors.ts`).
+
+**403 × 404:** recurso que não existe responde 404; recurso que existe mas é de outro colecionador responde 403 (carteiras e arquivos). A exceção é `GET /orders/:id`, que responde 404 para pedido alheio, para não revelar nem que o pedido existe.
 
 ## 3. Eventos Socket.IO
 
@@ -110,6 +118,20 @@ Prefixo `/api`. Respostas validadas com Zod. Rotas privadas exigem `Authorizatio
 - **Pedido pendente:** o checkout consulta `GET /orders?status=pending` e bloqueia uma nova compra enquanto houver um.
 - **Recibo:** só é exibido para pedido `confirmed` vindo da simulação, e é um **snapshot** (itens, preços, taxas, total) gravado na criação: mudanças posteriores no catálogo não o alteram.
 
+## 6.1 Seções da conta ("Meu perfil")
+
+A sidebar do Figma tem, além de Dados do perfil e Carteiras, cinco itens. Todos funcionam de ponta a ponta (REST + MSW + cache), como rotas privadas filhas de `/profile`:
+
+| Item | Rota | Como funciona |
+| --- | --- | --- |
+| Atividade | `/profile/activity` | Histórico **derivado no servidor** do que aconteceu no banco simulado: pedido enviado, pagamento confirmado ou recusado, arquivo baixado, chamado aberto. Cada linha leva ao pedido, quando houver. |
+| Lista de interesse | `/profile/favorites` | Os NFTs favoritados (`GET /favorites/nfts`). Desfavoritar pelo coração do card some da lista na hora (a tela filtra pelos ids da atualização otimista) e volta se a API recusar (rollback). Preços atualizam por `nft.updated`. |
+| Ofertas | `/profile/offers` | Os cupons publicados (os mesmos de `mocks/fixtures/coupons.ts`), com situação e validade. "Aplicar no carrinho" usa o mesmo `PUT /cart/coupon` do carrinho: o desconto real vem da cotação. Cupom expirado aparece, mas não pode ser aplicado. |
+| Arquivos baixados | `/profile/downloads` | Arte de cada edição de **pedido confirmado**. "Baixar" registra o download na API (`POST /downloads/:id`) e só então entrega o arquivo (WebP de 800 px); o contador e a data do último download vêm da resposta. |
+| Suporte | `/profile/support` | Formulário validado (assunto, pedido relacionado opcional, título, mensagem) que abre um chamado persistido, com protocolo `KUR-00xxxx`, e a lista dos chamados do usuário. |
+
+No banco simulado (`SCHEMA_VERSION = 6`) entraram `downloads` (histórico) e `tickets`. A tab bar mobile leva o coração à lista de interesse, e o rodapé liga "Atividade", "Lista de interesse" e "Central de ajuda" às rotas acima.
+
 ## 7. Estratégia de cache (TanStack Query)
 
 | Política | Valor |
@@ -120,24 +142,24 @@ Prefixo `/api`. Respostas validadas com Zod. Rotas privadas exigem `Authorizatio
 | Refetch | ao focar a janela e ao reconectar |
 | Timeout HTTP | 8 s (o tempo de espera da porta de rede não conta) |
 
-- **Chaves** (`app/query-keys.ts`): catálogo `['nfts', 'list', query]`, com arrays ordenados e deduplicados para a mesma seleção dar a mesma chave; detalhe `['nfts', 'detail', id]`; **tudo que é privado fica sob `['user', userId, …]`** (sessão, favoritos, carrinho, carteiras, perfil, pedidos), então limpar esse prefixo isola usuários. Carrinho do visitante: `['cart', 'guest', id]`. A cotação fica "dentro" do carrinho: `[...cartKey, 'quote', version, network]`.
+- **Chaves** (`app/query-keys.ts`): catálogo `['nfts', 'list', query]`, com arrays ordenados e deduplicados para a mesma seleção dar a mesma chave; detalhe `['nfts', 'detail', id]`; **tudo que é privado fica sob `['user', userId, …]`** (sessão, favoritos e lista de interesse, carrinho, carteiras, perfil, pedidos, atividade, arquivos, chamados), então limpar esse prefixo isola usuários. A lista de interesse fica sob a chave dos favoritos (`['user', id, 'favorites', 'nfts']`): invalidar os favoritos também a relê. Ofertas são públicas: `['offers']`. Atividade e arquivos usam `staleTime: 0`, porque mudam por fora da tela (liquidação de pedido, download em outra aba). Carrinho do visitante: `['cart', 'guest', id]`. A cotação fica "dentro" do carrinho: `[...cartKey, 'quote', version, network]`.
 - **Respostas obsoletas:** cada combinação de filtros tem a sua chave, e o `signal` do Query é repassado ao Axios, então requisições obsoletas são canceladas. `keepPreviousData` mantém a grade anterior esmaecida enquanto a nova carrega.
 - **Atualização otimista com rollback:** favoritos (`onMutate` aplica, `onError` restaura e avisa, `onSettled` sincroniza).
-- **Invalidação:** mutations de carrinho gravam o `Cart` devolvido; conflito 409 relê o carrinho; perfil atualiza cache e sessão; pedido terminal invalida carrinho e pendentes; eventos em tempo real atualizam ou invalidam (seção 8).
+- **Invalidação:** mutations de carrinho gravam o `Cart` devolvido; conflito 409 relê o carrinho; perfil atualiza cache e sessão; pedido terminal invalida carrinho e pendentes; download e chamado novo gravam a resposta no cache e invalidam a atividade; eventos em tempo real atualizam ou invalidam (seção 8).
 
 ## 8. Reconciliação REST ↔ Socket.IO
 
 - **`EventGuard`** (`realtime/apply-event.ts`): descarta eventos já vistos (`eventId`, até 500 lembrados) e eventos com `version ≤` última versão aplicada do mesmo recurso. Além disso, o cache só é alterado se a versão do evento for **maior que a do dado em cache**. Duplicados e atrasados nunca regridem o estado nem repetem efeitos (toasts).
-- **`nft.updated`:** atualiza detalhe, listas e destaques no cache (sem refetch) e **invalida os carrinhos** que contêm o NFT. O carrinho e a cotação são relidos da API, que é a fonte da verdade dos valores. Se o NFT está no carrinho, aparece um toast "Preço atualizado: X, de A para B ETH" ou "esgotou".
-- **`order.updated`:** só é aceito se `userId` for o da sessão atual (defesa em profundidade, além do filtro no servidor). Invalida o pedido, os pendentes e o carrinho, e notifica confirmação ou recusa.
-- **Reconexão:** ao reconectar, `reconcileActiveQueries` relê da REST tudo o que está em tela (catálogo, carrinhos, pedidos), recuperando os eventos perdidos durante a queda. Enquanto o socket está fora, aparece o aviso "Conexão em tempo real perdida", e a página do pedido consulta a API a cada 5 s como rede de segurança.
+- **`nft.updated`:** atualiza detalhe, listas, destaques e lista de interesse no cache (sem refetch) e **invalida os carrinhos** que contêm o NFT. O carrinho e a cotação são relidos da API, que é a fonte da verdade dos valores. Se o NFT está no carrinho, aparece um toast "Preço atualizado: X, de A para B ETH" ou "esgotou".
+- **`order.updated`:** só é aceito se `userId` for o da sessão atual (defesa em profundidade, além do filtro no servidor). Invalida o pedido, os pendentes, o carrinho, a atividade e os arquivos (pedido confirmado libera o download), e notifica confirmação ou recusa.
+- **Reconexão:** ao reconectar, `reconcileActiveQueries` relê da REST tudo o que está em tela (catálogo, carrinhos, pedidos, favoritos, atividade, arquivos), recuperando os eventos perdidos durante a queda. Enquanto o socket está fora, aparece o aviso "Conexão em tempo real perdida", e a página do pedido consulta a API a cada 5 s como rede de segurança.
 - **Ciclo de vida:** um socket por sessão; ao trocar de sessão, `removeAllListeners` + `disconnect`. Eventos de uma sessão anterior não chegam à nova.
 
 ## 9. Mocks (MSW)
 
-- **Banco simulado** (`mocks/db`) persistido em `localStorage` (`kurio:mock-db:v1`, com `SCHEMA_VERSION`: mudou o formato, ressemeia). `__kurioMocks.reset()` restaura integralmente o estado conhecido (usuários, 36 NFTs determinísticos, favoritos, carteiras; carrinhos e pedidos vazios).
+- **Banco simulado** (`mocks/db`) persistido em `localStorage` (`kurio:mock-db:v1`, com `SCHEMA_VERSION`: mudou o formato, ressemeia). `__kurioMocks.reset()` restaura integralmente o estado conhecido (usuários, 36 NFTs determinísticos, favoritos, carteiras; carrinhos, pedidos, downloads e chamados vazios).
 - **Fixtures determinísticas:** PRNG com semente. Os 9 primeiros NFTs reproduzem o Figma; o carrinho do Figma (2×1.19 + 6×1.39 + 9×1.79 + 0.016) dá exatamente 26.846 ETH.
-- **Condições de rede:** todo handler passa por `withConditions` (latência fixa, variável ou fora de ordem, e falhas por regra: erro HTTP, falha de conexão, timeout). Cenários configuráveis e reproduzíveis, listados no README.
+- **Condições de rede:** todo handler passa por `withConditions` (latência fixa, variável ou fora de ordem, e falhas por regra: erro HTTP, falha de conexão, timeout). Cenários configuráveis e reproduzíveis, listados no README. `request-timeout` usa a falha `timeout` (o handler nunca responde e o cliente estoura os 8 s); `flaky-favorites` só afeta as mutations (`PUT`/`DELETE`), não a leitura da lista de interesse.
 - **Ativação:** `VITE_ENABLE_MOCKS` (padrão `true`, inclusive no build publicado). Os chunks do MSW são pré-carregados em paralelo ao app (plugin `kurio:preload-mocks` no `vite.config.ts`).
 - **Porta de rede:** o app renderiza imediatamente; as requisições Axios e o socket aguardam o `worker.start()` (`app/network-ready.ts`). Nenhuma requisição sai antes de o mock interceptar.
 - **Controles** (`window.__kurioMocks`): `scenarios`, `scenario()`, `setScenario()`, `reset()`, `expireSession()`, `setSettleDelay()`, `realtime.{changePrice, changeStock, replayLast, emitStale, emitForeignOrder, setOnline, peerCount}`.
@@ -153,6 +175,7 @@ Auditoria axe-core (WCAG 2.2 A/AA) em todas as telas, modais e drawers, nos 3 vi
 - Live regions para resultados de busca, mutations e eventos em tempo real; toasts acessíveis.
 - `prefers-reduced-motion` desliga o shimmer e as animações; sem overflow horizontal até 320 px (zoom de 400%).
 - Ações fora do escopo usam `<Unavailable>`: mantêm o visual, não são clicáveis e anunciam "(indisponível nesta demonstração)".
+- Seções da conta: listas com rótulo, tipo de atividade em texto (não só ícone ou cor), situação do cupom escrita ("Válido até"/"Expirou em"), botões com o texto visível dentro do nome acessível e o complemento só para leitores de tela ("Aplicar no carrinho cupom KURIO10", WCAG 2.5.3). Downloads e chamados são anunciados na live region.
 
 ## 11. Performance e Lighthouse
 
@@ -187,6 +210,8 @@ O CLS está dentro do recomendado (≤ 0,1). O TBT fica em 123 ms no início e 2
 - **Tempo real:** só WebSocket, sem rooms nem ack, heartbeat feito pelo mock (seção 3). Fora do navegador (ex.: testes de API em Node) o binding não é usado.
 - **Explorador de blocos e transações:** hashes e links simulados. "Ver no Etherscan" abre um "Explorador simulado", em vez de levar a um link que daria "não encontrado".
 - **Baselines visuais** geradas no Windows. Em outro sistema, gere as próprias (fontes renderizam diferente).
+- **Suporte:** o chamado é registrado e listado, mas não há atendente simulado: ele fica "Aberto" (a tela não promete resposta).
+- **Arquivos:** o download entrega o WebP de 800 px, o maior derivado das artes do Figma (os originais de ~2,7 MB não vão para o build).
 - **Service worker:** na primeira visita, as requisições aguardam o registro do MSW (alguns centésimos de segundo).
 
 ## 13. Decisões de UX
@@ -198,6 +223,8 @@ O CLS está dentro do recomendado (≤ 0,1). O TBT fica em 123 ms no início e 2
 - **Telas focadas no mobile** (detalhe, carrinho, pagamento, login e cadastro): sem tab bar e rodapé, com barra de ação própria, como no Figma.
 - **Mobile:** os dados do colecionador no pagamento vêm recolhidos (pré-preenchidos do perfil e da carteira) e se abrem sozinhos se houver erro.
 - **Edição padrão** no detalhe: 1/50, se disponível (como no Figma). A quantidade é limitada pelo estoque menos o que já está no carrinho, com aviso.
+- **Sessão expirada no checkout:** o formulário continua montado (um erro em segundo plano não substitui a tela quando há dados em cache). Depois do novo login, a revisão que falhou com 401 é refeita sozinha, com valores do servidor.
+- **Ofertas:** aplicar um cupom com o carrinho vazio é permitido (ele fica salvo no carrinho), e a oferta avisa que o desconto vale para os próximos itens.
 - **Feedback:** toasts com live region; erros sempre com "Tentar novamente"; skeletons com as mesmas dimensões do conteúdo.
 
 ## 14. Desvios do Figma e substituição de assets
@@ -212,7 +239,8 @@ O CLS está dentro do recomendado (≤ 0,1). O TBT fica em 123 ms no início e 2
 - **Compartilhar:** o Figma mostra Instagram, que não tem link de compartilhamento na web; foi substituído por "Copiar link".
 - **"Avaliações de colecionadores":** fora do escopo; exibe só a nota e a contagem, com a aba indisponível.
 - **Perfil, carteiras e confirmação no mobile:** sem frame no Figma; foram derivados do padrão das outras telas mobile.
-- **Navegação:** "Mercado" leva ao catálogo e fica ativo no fluxo de compra; "Criadores" e "Aprenda" (editoriais) ficam indisponíveis. Na tab bar mobile, o botão central (ícone de leitor) abre a busca e o coração leva ao perfil (a lista de interesse está fora do escopo).
-- **Fora do escopo, sem aparentar sucesso:** login social, "Esqueceu a senha?", newsletter, "Ler mais" do diário e itens de suporte, atividade, ofertas e downloads.
+- **Navegação:** "Mercado" leva ao catálogo e fica ativo no fluxo de compra; "Criadores" e "Aprenda" (editoriais) ficam indisponíveis. Na tab bar mobile, o botão central (ícone de leitor) abre a busca e o coração leva à lista de interesse.
+- **Seções da conta (atividade, lista de interesse, ofertas, arquivos, suporte):** o enunciado deixa atividade, ofertas, downloads e suporte fora da entrega obrigatória, mas foram implementadas de ponta a ponta para que nenhum item da sidebar fique sem função. Sem frame no Figma, seguem o padrão da tela de perfil (título, cards `bg-card`, mesmos campos de formulário).
+- **Fora do escopo, sem aparentar sucesso:** login social, "Esqueceu a senha?", newsletter, "Ler mais" do diário, "Minha coleção", "Estúdio do criador" e os links editoriais da Central de ajuda ("Como comprar NFTs" etc.).
 - **Carrinho:** o Figma mostra 3 itens no desktop e 4 no mobile (ilustrativo); a quantidade vem dos dados.
 - **Select de ordenação:** nativo do sistema (acessível e leve), com o mesmo visual fechado ("Ordenar por: Listados recentemente ▾").

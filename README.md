@@ -65,7 +65,23 @@ Na primeira execução dos testes: `pnpm exec playwright install chromium`.
 | `ana@kurio.dev` | `Kurio@123` | 2 carteiras (Principal/MetaMask/Ethereum e Reserva/Coinbase/Polygon), 2 favoritos |
 | `leo@kurio.dev` | `Kurio@456` | Conta nova: sem carteiras e sem favoritos (cadastro de carteira; isolamento entre usuários) |
 
-**Cupons:** `KURIO10` (10%), `LANCAMENTO` (0.5 ETH), `EXPIRADO` (expirado). Qualquer outro código é inválido.
+**Cupons:** `KURIO10` (10%), `LANCAMENTO` (0.5 ETH), `EXPIRADO` (expirado). Qualquer outro código é inválido. Os mesmos cupons aparecem em **Meu perfil → Ofertas**.
+
+## Área do colecionador ("Meu perfil")
+
+Todas as seções da sidebar funcionam com a API simulada (rotas privadas):
+
+| Seção | Rota | O que dá para fazer |
+| --- | --- | --- |
+| Dados do perfil | `/profile` | Editar dados, avatar e senha |
+| Carteiras | `/profile/wallets` | Cadastrar e editar as carteiras principal e secundária |
+| Atividade | `/profile/activity` | Histórico de pedidos, pagamentos, downloads e chamados |
+| Lista de interesse | `/profile/favorites` | Ver e remover os NFTs favoritados (coração da tab bar no mobile) |
+| Ofertas | `/profile/offers` | Ver cupons ativos e expirados e aplicá-los ao carrinho |
+| Arquivos baixados | `/profile/downloads` | Baixar a arte dos NFTs de pedidos confirmados (cada download fica registrado) |
+| Suporte | `/profile/support` | Abrir chamado (com protocolo) e acompanhar os já abertos |
+
+Roteiro rápido: entre como Ana, compre um NFT até o recibo, depois abra **Arquivos baixados** (baixe a arte) e **Atividade** (o pedido, o pagamento e o download aparecem lá).
 
 As senhas não são guardadas em claro: o banco simulado armazena SHA-256 com salt (ver limitações no `ARCHITECTURE.md`).
 
@@ -93,9 +109,10 @@ await __kurioMocks.reset('default')   // reseta e volta ao cenário padrão
 | `variable-latency` | Latência pseudoaleatória e determinística entre 100 ms e 1,2 s |
 | `out-of-order` | Respostas fora de ordem (a 1ª requisição de cada rota é lenta) |
 | `server-errors` | `GET /nfts` responde 500 três vezes (inicial + 2 retries); a 4ª funciona |
+| `request-timeout` | `GET /nfts` não responde três vezes: o cliente estoura o timeout de 8 s (inicial + 2 retries); a 4ª funciona |
 | `offline` | Toda requisição falha na conexão |
 | `session-expired` | A sessão expira na 4ª requisição autenticada |
-| `flaky-favorites` | A 1ª alteração de favorito falha (503); a seguinte funciona |
+| `flaky-favorites` | A 1ª alteração de favorito (favoritar ou remover) falha (503); a seguinte funciona |
 | `price-changed` | Ao confirmar o pedido, o preço do 1º item sobe 10% |
 | `sold-out-at-checkout` | Ao confirmar o pedido, a edição do 1º item esgota |
 | `order-timeout` | O pedido é criado, mas a resposta não chega (timeout) |
@@ -107,9 +124,13 @@ await __kurioMocks.reset('default')   // reseta e volta ao cenário padrão
 | Fluxo | Passo a passo |
 | --- | --- |
 | Skeleton e retry do catálogo | `/?scenario=slow-network` (skeletons) · `/?scenario=server-errors` → "Tentar novamente" |
+| Timeout de requisição | `/?scenario=request-timeout`: skeleton por ~30 s (3 tentativas de 8 s), depois "A requisição demorou demais" → "Tentar novamente" |
 | Respostas fora de ordem | `/?scenario=out-of-order` e troque filtros rapidamente: a grade mostra sempre o último filtro |
-| Favorito com rollback | `/?scenario=flaky-favorites`, entre como Ana e favorite um NFT: o coração volta e aparece o erro |
+| Favorito com rollback | `/?scenario=flaky-favorites`, entre como Ana e favorite um NFT: o coração volta e aparece o erro. Na **Lista de interesse**, remover um item faz ele voltar à lista |
 | Sessão expirada | `/?scenario=session-expired` e navegue logado; ou `__kurioMocks.expireSession()` e abra `/profile` |
+| Sessão expirada no checkout | No pagamento, altere um campo, rode `__kurioMocks.expireSession()` e clique em "Confirmar compra": entre de novo no diálogo; o campo continua preenchido e a revisão é refeita |
+| Falta de permissão (403) | No console, logado como Leo: `fetch('/api/wallets/wal_ana_primary', {method: 'PUT', ...})` responde 403 `FORBIDDEN` (o teste `data-layer.spec.ts` › permissão faz isso) |
+| Erros nos formulários da conta | **Suporte**: envie vazio (assunto, título e mensagem obrigatórios) · **Ofertas**: o cupom expirado fica bloqueado |
 | Cupom inválido/expirado | No carrinho, aplique `QUALQUER` ou `EXPIRADO` |
 | Preço alterado / esgotado no checkout | `/?scenario=price-changed` ou `sold-out-at-checkout`, compre e clique em "Confirmar pagamento" |
 | Timeout com recuperação | `/?scenario=order-timeout`, confirme: após ~8 s aparece "Verificando seu pedido…" e o **mesmo** pedido é recuperado |
@@ -122,8 +143,9 @@ await __kurioMocks.reset('default')   // reseta e volta ao cenário padrão
 
 ## Testes
 
-- **249 execuções de teste** (testes × projetos desktop 1440, tablet 768 e mobile 390; 11 pulados de propósito por não se aplicarem ao viewport), em Chromium, contra o build de produção (`vite preview`). Cada teste parte de estado isolado (`__kurioMocks.reset`). Relógio, latência e eventos são controlados.
-- Cobrem os 12 itens do enunciado: busca, filtros, ordenação, paginação e histórico · detalhe direto e inexistente · cadastro, login, expiração, logout e troca de usuário · favoritos com falha e recuperação · carrinho (quantidades, remoção, cupom, persistência) · compra completa · recusa, clique repetido e timeout · perfil, avatar, senha e carteiras · preço e disponibilidade via Socket.IO · duplicados, antigos, desconexão e pedido pendente · teclado, foco e validação · skeletons e retry.
+- **278 execuções de teste** (testes × projetos desktop 1440, tablet 768 e mobile 390; 11 pulados de propósito por não se aplicarem ao viewport), em Chromium, contra o build de produção (`vite preview`). Cada teste parte de estado isolado (`__kurioMocks.reset`). Relógio, latência e eventos são controlados.
+- Cobrem os 12 itens do enunciado: busca, filtros, ordenação, paginação e histórico · detalhe direto e inexistente · cadastro, login, expiração, logout e troca de usuário · favoritos com falha e recuperação · carrinho (quantidades, remoção, cupom, persistência) · compra completa · recusa, clique repetido e timeout · perfil, avatar, senha e carteiras · preço e disponibilidade via Socket.IO · duplicados, antigos, desconexão e pedido pendente · teclado, foco e validação · skeletons, timeout e retry.
+- **Além dos 12 itens:** seções da conta (`member.spec.ts`: lista de interesse com rollback e isolamento, atividade, download registrado, ofertas, suporte com validação), expiração da sessão durante o checkout e contrato de permissão (403).
 - **Acessibilidade:** auditoria axe-core (WCAG 2.2 A/AA) em todas as telas, nos 3 viewports, e reflow a 320 px.
 - **Regressão visual:** início, detalhe, carrinho e pagamento, em desktop e mobile. Baselines em `e2e/visual/` (geradas no Windows: em macOS/Linux, gere as suas com `pnpm test:e2e:update visual`, porque a renderização de fontes muda entre sistemas).
 - Relatório HTML em `playwright-report/` (`pnpm exec playwright show-report`). Traces e screenshots das falhas ficam em `test-results/`.

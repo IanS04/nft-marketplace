@@ -53,6 +53,6 @@ export async function buildSeed(kind: CatalogKind): Promise<MockDbState> {
 
   return {
     schemaVersion: SCHEMA_VERSION, seedKind: kind, users, sessions: [], nfts, favorites, carts: {}, quotes: [],
-    wallets, walletConnections: {}, orders: [], idempotency: {},
+    wallets, walletConnections: {}, orders: [], idempotency: {}, downloads: [], tickets: [],
   }
 }
