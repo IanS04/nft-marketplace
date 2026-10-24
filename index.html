@@ -9,6 +9,18 @@
       content="Kurio: marketplace de NFTs selecionados de criadores emergentes e lendários. Descubra, colecione e compre arte digital verificada."
     />
     <title>Kurio · Marketplace de NFTs</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <!-- Fonte da UI inteira: baixada em paralelo ao JS (evita troca de fonte e layout shift). -->
+    <link rel="preload" href="/fonts/jetbrains-mono-latin.woff2" as="font" type="font/woff2" crossorigin />
+    <!-- Arte do hero (LCP da tela inicial). Os mesmos `sizes` do componente Hero. -->
+    <link
+      rel="preload"
+      as="image"
+      href="/assets/nfts/nft2-800.webp"
+      imagesrcset="/assets/nfts/nft2-400.webp 400w, /assets/nfts/nft2-800.webp 800w"
+      imagesizes="(min-width: 1024px) 24rem, (min-width: 768px) 22rem, 7.5rem"
+      fetchpriority="high"
+    />
   </head>
   <body>
     <div id="root"></div>

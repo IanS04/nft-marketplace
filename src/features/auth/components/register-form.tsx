@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
 import { FieldError, PasswordField, TextField } from '@/components/ui/form-field'
 import { applyApiErrors } from '@/lib/form-errors'
@@ -14,9 +14,11 @@ interface RegisterFormProps {
   size?: AuthFormSize
   submitLabel?: string
   onSuccess: (session: AuthSession) => void
+  /** Foca o 1º campo ao montar (o formulário pode chegar depois do diálogo abrir: carga sob demanda). */
+  autoFocus?: boolean
 }
 
-export function RegisterForm({ idPrefix, size = 'compact', submitLabel = 'Criar conta', onSuccess }: RegisterFormProps) {
+export function RegisterForm({ idPrefix, size = 'compact', submitLabel = 'Criar conta', onSuccess, autoFocus = false }: RegisterFormProps) {
   const registerAccount = useRegister()
   const form = useForm({
     resolver: zodResolver(registerSchema),
@@ -42,6 +44,7 @@ export function RegisterForm({ idPrefix, size = 'compact', submitLabel = 'Criar 
         label="Nome de usuário"
         hideLabel
         autoComplete="username"
+        autoFocus={autoFocus}
         placeholder="Nome de usuário"
         error={errors.username?.message}
         inputClassName={inputClass(size)}

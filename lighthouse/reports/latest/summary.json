@@ -1,0 +1,298 @@
+{
+  "environment": {
+    "date": "2026-10-24T15:18:54.644Z",
+    "lighthouse": "13.5.0",
+    "chrome": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
+    "node": "v24.22.1",
+    "os": "Windows_NT 10.0.26200 (x64)",
+    "cpu": "AMD Ryzen 5 5500                               ",
+    "cores": 12,
+    "memoryGb": 16,
+    "throttling": {
+      "method": "simulate",
+      "rttMs": 40,
+      "throughputKbps": 10240,
+      "requestLatencyMs": 0,
+      "downloadThroughputKbps": 0,
+      "uploadThroughputKbps": 0,
+      "cpuSlowdownMultiplier": 1
+    },
+    "server": "vite preview (build de produção), cenário de mocks \"default\""
+  },
+  "targets": {
+    "performance": 90,
+    "accessibility": 95,
+    "best-practices": 95,
+    "seo": 90
+  },
+  "results": [
+    {
+      "page": "inicio",
+      "path": "/",
+      "formFactor": "mobile",
+      "runs": [
+        {
+          "scores": {
+            "performance": 76,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "largest-contentful-paint": 4478.7855,
+            "cumulative-layout-shift": 0,
+            "total-blocking-time": 160,
+            "first-contentful-paint": 3149.874875,
+            "speed-index": 3149.874875
+          }
+        },
+        {
+          "scores": {
+            "performance": 77,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "largest-contentful-paint": 4466.548799999999,
+            "cumulative-layout-shift": 0,
+            "total-blocking-time": 111.50000000000045,
+            "first-contentful-paint": 3136.7368,
+            "speed-index": 3136.7368
+          }
+        },
+        {
+          "scores": {
+            "performance": 77,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "largest-contentful-paint": 4477.973400000001,
+            "cumulative-layout-shift": 0,
+            "total-blocking-time": 123,
+            "first-contentful-paint": 3146.4011499999997,
+            "speed-index": 3146.4011499999997
+          }
+        }
+      ],
+      "median": {
+        "scores": {
+          "performance": 77,
+          "accessibility": 100,
+          "best-practices": 100,
+          "seo": 100
+        },
+        "metrics": {
+          "largest-contentful-paint": 4477.973400000001,
+          "cumulative-layout-shift": 0,
+          "total-blocking-time": 123,
+          "first-contentful-paint": 3146.4011499999997,
+          "speed-index": 3146.4011499999997
+        }
+      }
+    },
+    {
+      "page": "inicio",
+      "path": "/",
+      "formFactor": "desktop",
+      "runs": [
+        {
+          "scores": {
+            "performance": 99,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "largest-contentful-paint": 902.5147999999999,
+            "cumulative-layout-shift": 0,
+            "total-blocking-time": 0,
+            "first-contentful-paint": 690.2574,
+            "speed-index": 690.2574
+          }
+        },
+        {
+          "scores": {
+            "performance": 99,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "largest-contentful-paint": 893.6306,
+            "cumulative-layout-shift": 0,
+            "total-blocking-time": 0,
+            "first-contentful-paint": 686.8153,
+            "speed-index": 686.8153
+          }
+        },
+        {
+          "scores": {
+            "performance": 99,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "largest-contentful-paint": 890.6369,
+            "cumulative-layout-shift": 0,
+            "total-blocking-time": 0,
+            "first-contentful-paint": 686.31845,
+            "speed-index": 686.31845
+          }
+        }
+      ],
+      "median": {
+        "scores": {
+          "performance": 99,
+          "accessibility": 100,
+          "best-practices": 100,
+          "seo": 100
+        },
+        "metrics": {
+          "largest-contentful-paint": 893.6306,
+          "cumulative-layout-shift": 0,
+          "total-blocking-time": 0,
+          "first-contentful-paint": 686.8153,
+          "speed-index": 686.8153
+        }
+      }
+    },
+    {
+      "page": "detalhe",
+      "path": "/nfts/emerald-ape-042",
+      "formFactor": "mobile",
+      "runs": [
+        {
+          "scores": {
+            "performance": 76,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "largest-contentful-paint": 3982.4079999999994,
+            "cumulative-layout-shift": 0.02916160388821385,
+            "total-blocking-time": 282,
+            "first-contentful-paint": 3068.8448,
+            "speed-index": 3068.8448
+          }
+        },
+        {
+          "scores": {
+            "performance": 75,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "largest-contentful-paint": 3977.3565,
+            "cumulative-layout-shift": 0.02916160388821385,
+            "total-blocking-time": 298.93565000000035,
+            "first-contentful-paint": 3067.6139000000003,
+            "speed-index": 3067.6139000000003
+          }
+        },
+        {
+          "scores": {
+            "performance": 75,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "largest-contentful-paint": 3979.91725,
+            "cumulative-layout-shift": 0.02916160388821385,
+            "total-blocking-time": 314.49172499999963,
+            "first-contentful-paint": 3069.458625,
+            "speed-index": 3069.458625
+          }
+        }
+      ],
+      "median": {
+        "scores": {
+          "performance": 75,
+          "accessibility": 100,
+          "best-practices": 100,
+          "seo": 100
+        },
+        "metrics": {
+          "largest-contentful-paint": 3979.91725,
+          "cumulative-layout-shift": 0.02916160388821385,
+          "total-blocking-time": 298.93565000000035,
+          "first-contentful-paint": 3068.8448,
+          "speed-index": 3068.8448
+        }
+      }
+    },
+    {
+      "page": "detalhe",
+      "path": "/nfts/emerald-ape-042",
+      "formFactor": "desktop",
+      "runs": [
+        {
+          "scores": {
+            "performance": 99,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "largest-contentful-paint": 878.77675,
+            "cumulative-layout-shift": 0,
+            "total-blocking-time": 0,
+            "first-contentful-paint": 669.36605,
+            "speed-index": 669.36605
+          }
+        },
+        {
+          "scores": {
+            "performance": 99,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "largest-contentful-paint": 875.8456249999999,
+            "cumulative-layout-shift": 0,
+            "total-blocking-time": 0,
+            "first-contentful-paint": 685.4612500000001,
+            "speed-index": 685.4612500000001
+          }
+        },
+        {
+          "scores": {
+            "performance": 99,
+            "accessibility": 100,
+            "best-practices": 100,
+            "seo": 100
+          },
+          "metrics": {
+            "largest-contentful-paint": 887.3852499999999,
+            "cumulative-layout-shift": 0,
+            "total-blocking-time": 0,
+            "first-contentful-paint": 674.23115,
+            "speed-index": 674.23115
+          }
+        }
+      ],
+      "median": {
+        "scores": {
+          "performance": 99,
+          "accessibility": 100,
+          "best-practices": 100,
+          "seo": 100
+        },
+        "metrics": {
+          "largest-contentful-paint": 878.77675,
+          "cumulative-layout-shift": 0,
+          "total-blocking-time": 0,
+          "first-contentful-paint": 674.23115,
+          "speed-index": 674.23115
+        }
+      }
+    }
+  ]
+}

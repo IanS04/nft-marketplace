@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { sessionStore } from '@/services/api/session-store'
 import { useSession } from '../hooks/use-session'
-import { LoginForm } from './login-form'
+import { LazyLoginForm as LoginForm } from './lazy-forms'
 
 const AUTH_PATHS = ['/login', '/register']
 

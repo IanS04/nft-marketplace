@@ -43,8 +43,8 @@ export class CatalogPage {
 
   async sortBy(label: string) {
     const choose = async (scope: Page | Locator) => {
-      await scope.getByRole('combobox', { name: 'Ordenar por:' }).click()
-      await this.page.getByRole('option', { name: label }).click()
+      // <select> nativo: escolhe a opção pelo texto visível
+      await scope.getByRole('combobox', { name: 'Ordenar por:' }).selectOption({ label })
     }
     if (isMobile(this.page)) await this.withFilters(choose)
     else await choose(this.page)

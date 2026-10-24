@@ -10,7 +10,8 @@ import { Footer } from '@/components/layout/footer'
 import { Header } from '@/components/layout/header'
 import { MobileTabBar } from '@/components/layout/mobile-tab-bar'
 import { SkipLink } from '@/components/layout/skip-link'
-import { Toaster } from '@/components/ui/toaster'
+import { lazy, Suspense, useEffect, useState } from 'react'
+import { networkReady } from '@/app/network-ready'
 import { AuthDialog } from '@/features/auth/components/auth-dialog'
 import { SessionExpiredDialog } from '@/features/auth/components/session-expired-dialog'
 import { SessionValidation } from '@/features/auth/components/session-validation'
@@ -43,7 +44,8 @@ function RootLayout() {
       <HeadContent />
       <SkipLink />
       <Header />
-      <main id="conteudo" tabIndex={-1} className="outline-none">
+      {/* min-h: enquanto uma rota carrega, o rodapé não "sobe" para a tela e depois desce (CLS). */}
+      <main id="conteudo" tabIndex={-1} className="min-h-[100dvh] outline-none">
         <Outlet />
       </main>
       <Footer className={cn(fullscreenOnMobile && 'max-md:hidden')} />
@@ -53,7 +55,7 @@ function RootLayout() {
       <SessionValidation />
       <CartSessionBridge />
       <RealtimeProvider />
-      <Toaster />
+      <DeferredToaster />
       <LiveRegion />
     </>
   )
@@ -64,5 +66,19 @@ function RootError({ error, reset }: ErrorComponentProps) {
     <Container className="py-16">
       <ErrorState title="Não foi possível exibir esta página" error={error} onRetry={reset} />
     </Container>
+  )
+}
+
+// Toasts: a biblioteca (sonner) carrega depois do primeiro desenho, quando a rede já abriu.
+const Toaster = lazy(() => import('@/components/ui/toaster').then((m) => ({ default: m.Toaster })))
+
+function DeferredToaster() {
+  const [ready, setReady] = useState(false)
+  useEffect(() => { void networkReady.then(() => setReady(true)) }, [])
+  if (!ready) return null
+  return (
+    <Suspense fallback={null}>
+      <Toaster />
+    </Suspense>
   )
 }

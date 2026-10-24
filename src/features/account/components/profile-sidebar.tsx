@@ -1,7 +1,7 @@
 import { Link, useNavigate } from '@tanstack/react-router'
 import { AlertTriangle, BadgePercent, Download, Heart, LogOut, MapPin, ShoppingCart, UserRound } from 'lucide-react'
 import type { ReactNode } from 'react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { Unavailable } from '@/components/feedback/unavailable'
 import { useLogout } from '@/features/auth/api/mutations'
 

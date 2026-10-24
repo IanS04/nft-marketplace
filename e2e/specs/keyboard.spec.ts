@@ -31,15 +31,14 @@ test('skip link é o 1º foco e leva ao conteúdo principal; o foco é visível'
   expect(ring).not.toBe('none')
 })
 
-test('ordenação pelo teclado (select acessível)', async ({ page }) => {
+test('ordenação pelo teclado (select nativo)', async ({ page }) => {
   test.skip(isMobile(page), 'no mobile a ordenação fica no drawer (testado abaixo)')
   const sort = page.getByRole('combobox', { name: 'Ordenar por:' })
   await sort.focus()
-  await page.keyboard.press('Enter')
+  // Select nativo fechado: a seta já troca para a próxima opção (Windows/Linux)
   await page.keyboard.press('ArrowDown')
-  await page.keyboard.press('Enter')
   await expect.poll(() => searchParam(page, 'sort')).toBe('price_asc')
-  await expect(sort).toBeFocused() // o foco volta ao gatilho
+  await expect(sort).toBeFocused()
 })
 
 test('drawer de filtros: foco preso, Esc fecha e devolve o foco', async ({ page }) => {

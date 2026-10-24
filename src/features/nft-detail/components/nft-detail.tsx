@@ -1,7 +1,7 @@
 import { Link, useCanGoBack, useNavigate, useRouter } from '@tanstack/react-router'
 import { ChevronLeft, ShoppingCart } from 'lucide-react'
 import { useState } from 'react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { Unavailable } from '@/components/feedback/unavailable'
 import { Breadcrumb } from '@/components/layout/breadcrumb'
 import { Container } from '@/components/layout/container'

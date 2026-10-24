@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query'
 import { useEffect } from 'react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { queryKeys } from '@/app/query-keys'
 import { useSession } from '@/features/auth/hooks/use-session'
 import { getGuestCartId, hasGuestCartId, resetGuestCartId } from '@/lib/guest-cart'

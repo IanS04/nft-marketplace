@@ -1,5 +1,5 @@
 import { Link2, Linkedin, Twitter } from 'lucide-react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 
 const iconLink = 'flex size-7 items-center justify-center rounded-sm text-foreground hover:bg-secondary hover:text-primary'
 

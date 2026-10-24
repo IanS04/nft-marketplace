@@ -1,5 +1,5 @@
 import { Heart } from 'lucide-react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
 import { useOpenAuth } from '@/features/auth/auth-dialog-store'
 import { useSession } from '@/features/auth/hooks/use-session'

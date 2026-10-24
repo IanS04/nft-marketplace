@@ -1,7 +1,11 @@
+import { useEffect } from 'react'
 import { Toaster as Sonner } from 'sonner'
+import { markToasterReady } from '@/lib/toast'
 
 /** Toasts de feedback das mutations. O sonner já anuncia cada toast numa live region. */
 export function Toaster() {
+  // Libera os toasts enfileirados (ver lib/toast.ts).
+  useEffect(markToasterReady, [])
   return (
     <Sonner
       position="top-center"

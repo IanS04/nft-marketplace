@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { AlertTriangle, Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { announce } from '@/components/feedback/announcer'
 import { NftImage } from '@/components/nft/nft-image'
 import { QuantityStepper } from '@/components/ui/quantity-stepper'

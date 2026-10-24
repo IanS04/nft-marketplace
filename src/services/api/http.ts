@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { env } from '@/app/env'
+import { networkReady } from '@/app/network-ready'
 import { sessionStore } from './session-store'
 import { toApiError } from './errors'
 
@@ -9,7 +10,10 @@ export const http = axios.create({
   headers: { Accept: 'application/json' },
 })
 
-http.interceptors.request.use((config) => {
+http.interceptors.request.use(async (config) => {
+  // Nada sai antes dos mocks estarem interceptando (o app já renderizou; só a rede espera).
+  // O timeout do Axios só começa quando a requisição sai de fato, então a espera não o consome.
+  await networkReady
   const token = sessionStore.getAccessToken()
   if (token) config.headers.set('Authorization', `Bearer ${token}`)
   config.headers.set('X-Request-Id', crypto.randomUUID())

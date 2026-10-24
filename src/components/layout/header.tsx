@@ -1,15 +1,17 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { LogIn, Search, ShoppingCart, X } from 'lucide-react'
-import { useRef, useState, type FormEvent } from 'react'
+import { lazy, Suspense, useRef, useState, type FormEvent } from 'react'
 import { Unavailable } from '@/components/feedback/unavailable'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useOpenAuth } from '@/features/auth/auth-dialog-store'
-import { UserMenu } from '@/features/auth/components/user-menu'
 import { CartCountBadge } from '@/features/cart/components/cart-count-badge'
 import { useSession } from '@/features/auth/hooks/use-session'
 import { cn } from '@/lib/cn'
 import { Logo } from './logo'
+
+// Menu do usuário (Radix DropdownMenu + floating-ui) só é baixado para quem está logado.
+const UserMenu = lazy(() => import('@/features/auth/components/user-menu').then((m) => ({ default: m.UserMenu })))
 
 // "Mercado" agrupa o fluxo de compra (detalhe, carrinho, pagamento), como no Figma.
 const MARKET_PATHS = ['/nfts/', '/cart', '/checkout', '/orders/']
@@ -64,7 +66,13 @@ export function Header() {
 function HeaderAccount() {
   const { status, session } = useSession()
   const openAuth = useOpenAuth()
-  if (status === 'authenticated' && session) return <UserMenu user={session.user} />
+  if (status === 'authenticated' && session) {
+    return (
+      <Suspense fallback={<span className="block h-8 w-40" aria-hidden="true" />}>
+        <UserMenu user={session.user} />
+      </Suspense>
+    )
+  }
   return (
     <Button size="sm" className="text-body" onClick={() => openAuth('login')}>
       <LogIn aria-hidden="true" />

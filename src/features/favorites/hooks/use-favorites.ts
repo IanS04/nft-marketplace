@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useMemo } from 'react'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { queryKeys } from '@/app/query-keys'
 import { announce } from '@/components/feedback/announcer'
 import { useSession } from '@/features/auth/hooks/use-session'

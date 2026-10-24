@@ -1,5 +1,6 @@
 import type { ManagerOptions, Socket, SocketOptions } from 'socket.io-client'
 import { env } from '@/app/env'
+import { networkReady } from '@/app/network-ready'
 import type { ClientToServerEvents, ServerToClientEvents } from '@/types'
 
 export type KurioSocket = Socket<ServerToClientEvents, ClientToServerEvents>
@@ -13,6 +14,7 @@ export type KurioSocket = Socket<ServerToClientEvents, ClientToServerEvents>
  * pelo MSW. (Bônus: a biblioteca sai do bundle inicial.)
  */
 export async function createSocket(token: string | null): Promise<KurioSocket> {
+  await networkReady // conecta só depois de o MSW interceptar (inclusive o WebSocket)
   const { io } = await import('socket.io-client')
   const options: Partial<ManagerOptions & SocketOptions> = {
     transports: ['websocket'],

@@ -1,6 +1,6 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { toast } from 'sonner'
+import { toast } from '@/lib/toast'
 import { Unavailable } from '@/components/feedback/unavailable'
 import { Button } from '@/components/ui/button'
 import { FieldError, PasswordField, TextField } from '@/components/ui/form-field'
@@ -16,9 +16,11 @@ interface LoginFormProps {
   size?: AuthFormSize
   defaultEmail?: string
   onSuccess: (session: AuthSession) => void
+  /** Foca o 1º campo ao montar (o formulário pode chegar depois do diálogo abrir: carga sob demanda). */
+  autoFocus?: boolean
 }
 
-export function LoginForm({ idPrefix, size = 'compact', defaultEmail = '', onSuccess }: LoginFormProps) {
+export function LoginForm({ idPrefix, size = 'compact', defaultEmail = '', onSuccess, autoFocus = false }: LoginFormProps) {
   const login = useLogin()
   const form = useForm({
     resolver: zodResolver(loginSchema),
@@ -43,6 +45,7 @@ export function LoginForm({ idPrefix, size = 'compact', defaultEmail = '', onSuc
         label="E-mail"
         hideLabel
         type="email"
+        autoFocus={autoFocus}
         autoComplete="email"
         placeholder="contato@email.com"
         error={errors.email?.message}
