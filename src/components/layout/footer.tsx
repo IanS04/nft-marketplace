@@ -8,9 +8,9 @@ import type { NftCategory } from '@/types'
 import { cn } from '@/lib/cn'
 import { Container } from './container'
 
-const FEATURES = [
-  { letter: 'W', title: 'Segurança da carteira', text: 'Proteja sua carteira e colecione arte digital verificada com confiança.' },
-  { letter: 'C', title: 'Criadores em destaque', text: 'Conheça artistas, estúdios e comunidades que moldam a cultura digital na rede.' },
+const FEATURES: { letter: string; title: string; text: string; link?: { to: '/learn' | '/creators'; hash?: string } }[] = [
+  { letter: 'W', title: 'Segurança da carteira', text: 'Proteja sua carteira e colecione arte digital verificada com confiança.', link: { to: '/learn', hash: 'seguranca' } },
+  { letter: 'C', title: 'Criadores em destaque', text: 'Conheça artistas, estúdios e comunidades que moldam a cultura digital na rede.', link: { to: '/creators' } },
   { letter: 'D', title: 'Alertas de lançamentos', text: 'Receba calendários de cunhagem, novidades de listas de acesso e análises do mercado.' },
 ]
 
@@ -43,7 +43,10 @@ export function Footer({ className }: { className?: string }) {
               <span aria-hidden="true" className="flex size-12 items-center justify-center rounded-full bg-primary text-title text-primary-foreground">
                 {f.letter}
               </span>
-              <h2 className="font-bold">{f.title}</h2>
+              {/* O título vira link quando há página correspondente (o visual do Figma não muda). */}
+              <h2 className="font-bold">
+                {f.link ? <Link to={f.link.to} hash={f.link.hash} className="hover:text-primary hover:underline">{f.title}</Link> : f.title}
+              </h2>
               <p className="text-micro text-muted-foreground">{f.text}</p>
             </div>
           ))}
@@ -67,7 +70,9 @@ export function Footer({ className }: { className?: string }) {
           </FooterColumn>
           <FooterColumn title="Central de ajuda">
             <li><Link to="/profile/support" className={linkClass}>Central de ajuda</Link></li>
-            {['Como comprar NFTs', 'Carteira e segurança', 'Política do mercado', 'Denunciar item'].map((label) => (
+            <li><Link to="/learn" hash="como-comprar" className={linkClass}>Como comprar NFTs</Link></li>
+            <li><Link to="/learn" hash="seguranca" className={linkClass}>Carteira e segurança</Link></li>
+            {['Política do mercado', 'Denunciar item'].map((label) => (
               <li key={label}><Unavailable className={linkClass}>{label}</Unavailable></li>
             ))}
           </FooterColumn>

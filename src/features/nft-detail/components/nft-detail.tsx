@@ -150,6 +150,14 @@ export function NftDetail({ nft }: { nft: Nft }) {
             <dl className="space-y-1 text-muted-foreground">
               <div className="flex gap-1"><dt>ID do token:</dt><dd>#{nft.tokenId}</dd></div>
               <div className="flex gap-1"><dt>Coleção:</dt><dd>{nft.collection.name}</dd></div>
+              <div className="flex gap-1">
+                <dt>Criador:</dt>
+                <dd>
+                  <Link to="/creators/$creatorId" params={{ creatorId: nft.creator.id }} className="text-primary underline underline-offset-4">
+                    {nft.creator.name}
+                  </Link>
+                </dd>
+              </div>
               <div className="flex gap-1"><dt>Atributos:</dt><dd>{nft.attributes.join(', ')}</dd></div>
             </dl>
             <div className="hidden md:block"><ShareLinks name={nft.name} /></div>

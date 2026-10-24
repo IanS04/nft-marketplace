@@ -67,6 +67,12 @@ Na primeira execução dos testes: `pnpm exec playwright install chromium`.
 
 **Cupons:** `KURIO10` (10%), `LANCAMENTO` (0.5 ETH), `EXPIRADO` (expirado). Qualquer outro código é inválido. Os mesmos cupons aparecem em **Meu perfil → Ofertas**.
 
+## Criadores e Aprenda
+
+- **Criadores** (`/creators`): quatro artistas fictícios, cada um autor de uma das artes da coleção (Marina Okada, Rafael Duarte, Helena Vasconcelos e Caio Mendes). O perfil mostra bio, processo de criação, ferramentas, royalties e a coleção à venda; o detalhe do NFT tem link para o criador.
+- **Aprenda** (`/learn`): como NFTs funcionam (redes e taxas, edições, royalties, segurança da carteira), passo a passo de compra no Kurio, glossário e perguntas frequentes.
+- No desktop, pelo header; no mobile, pelo rodapé ("Criadores em destaque", "Como comprar NFTs", "Carteira e segurança").
+
 ## Área do colecionador ("Meu perfil")
 
 Todas as seções da sidebar funcionam com a API simulada (rotas privadas):
@@ -143,9 +149,9 @@ await __kurioMocks.reset('default')   // reseta e volta ao cenário padrão
 
 ## Testes
 
-- **278 execuções de teste** (testes × projetos desktop 1440, tablet 768 e mobile 390; 11 pulados de propósito por não se aplicarem ao viewport), em Chromium, contra o build de produção (`vite preview`). Cada teste parte de estado isolado (`__kurioMocks.reset`). Relógio, latência e eventos são controlados.
+- **291 execuções de teste** (testes × projetos desktop 1440, tablet 768 e mobile 390; 11 pulados de propósito por não se aplicarem ao viewport), em Chromium, contra o build de produção (`vite preview`). Cada teste parte de estado isolado (`__kurioMocks.reset`). Relógio, latência e eventos são controlados.
 - Cobrem os 12 itens do enunciado: busca, filtros, ordenação, paginação e histórico · detalhe direto e inexistente · cadastro, login, expiração, logout e troca de usuário · favoritos com falha e recuperação · carrinho (quantidades, remoção, cupom, persistência) · compra completa · recusa, clique repetido e timeout · perfil, avatar, senha e carteiras · preço e disponibilidade via Socket.IO · duplicados, antigos, desconexão e pedido pendente · teclado, foco e validação · skeletons, timeout e retry.
-- **Além dos 12 itens:** seções da conta (`member.spec.ts`: lista de interesse com rollback e isolamento, atividade, download registrado, ofertas, suporte com validação), expiração da sessão durante o checkout e contrato de permissão (403).
+- **Além dos 12 itens:** criadores e aprenda (`discover.spec.ts`), seções da conta (`member.spec.ts`: lista de interesse com rollback e isolamento, atividade, download registrado, ofertas, suporte com validação), expiração da sessão durante o checkout e contrato de permissão (403).
 - **Acessibilidade:** auditoria axe-core (WCAG 2.2 A/AA) em todas as telas, nos 3 viewports, e reflow a 320 px.
 - **Regressão visual:** início, detalhe, carrinho e pagamento, em desktop e mobile. Baselines em `e2e/visual/` (geradas no Windows: em macOS/Linux, gere as suas com `pnpm test:e2e:update visual`, porque a renderização de fontes muda entre sistemas).
 - Relatório HTML em `playwright-report/` (`pnpm exec playwright show-report`). Traces e screenshots das falhas ficam em `test-results/`.

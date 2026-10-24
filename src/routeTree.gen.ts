@@ -13,10 +13,13 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SplatRouteImport } from './routes/$'
 import { Route as AuthRouteImport } from './routes/_auth'
 import { Route as CartRouteImport } from './routes/cart'
+import { Route as LearnRouteImport } from './routes/learn'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as AuthCheckoutRouteImport } from './routes/_auth.checkout'
 import { Route as AuthProfileRouteImport } from './routes/_auth.profile'
+import { Route as CreatorsIndexRouteImport } from './routes/creators.index'
+import { Route as CreatorsCreatorIdRouteImport } from './routes/creators.$creatorId'
 import { Route as NftsNftIdRouteImport } from './routes/nfts.$nftId'
 import { Route as AuthOrdersOrderIdRouteImport } from './routes/_auth.orders.$orderId'
 import { Route as AuthProfileIndexRouteImport } from './routes/_auth.profile.index'
@@ -46,6 +49,11 @@ const CartRoute = CartRouteImport.update({
   path: '/cart',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LearnRoute = LearnRouteImport.update({
+  id: '/learn',
+  path: '/learn',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -65,6 +73,16 @@ const AuthProfileRoute = AuthProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
   getParentRoute: () => AuthRoute,
+} as any)
+const CreatorsIndexRoute = CreatorsIndexRouteImport.update({
+  id: '/creators/',
+  path: '/creators/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CreatorsCreatorIdRoute = CreatorsCreatorIdRouteImport.update({
+  id: '/creators/$creatorId',
+  path: '/creators/$creatorId',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const NftsNftIdRoute = NftsNftIdRouteImport.update({
   id: '/nfts/$nftId',
@@ -116,11 +134,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/cart': typeof CartRoute
+  '/learn': typeof LearnRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/checkout': typeof AuthCheckoutRoute
   '/profile': typeof AuthProfileRouteWithChildren
+  '/creators/$creatorId': typeof CreatorsCreatorIdRoute
   '/nfts/$nftId': typeof NftsNftIdRoute
+  '/creators/': typeof CreatorsIndexRoute
   '/orders/$orderId': typeof AuthOrdersOrderIdRoute
   '/profile/activity': typeof AuthProfileActivityRoute
   '/profile/downloads': typeof AuthProfileDownloadsRoute
@@ -134,10 +155,13 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/$': typeof SplatRoute
   '/cart': typeof CartRoute
+  '/learn': typeof LearnRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/checkout': typeof AuthCheckoutRoute
+  '/creators/$creatorId': typeof CreatorsCreatorIdRoute
   '/nfts/$nftId': typeof NftsNftIdRoute
+  '/creators': typeof CreatorsIndexRoute
   '/orders/$orderId': typeof AuthOrdersOrderIdRoute
   '/profile/activity': typeof AuthProfileActivityRoute
   '/profile/downloads': typeof AuthProfileDownloadsRoute
@@ -153,11 +177,14 @@ export interface FileRoutesById {
   '/$': typeof SplatRoute
   '/_auth': typeof AuthRouteWithChildren
   '/cart': typeof CartRoute
+  '/learn': typeof LearnRoute
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/_auth/checkout': typeof AuthCheckoutRoute
   '/_auth/profile': typeof AuthProfileRouteWithChildren
+  '/creators/$creatorId': typeof CreatorsCreatorIdRoute
   '/nfts/$nftId': typeof NftsNftIdRoute
+  '/creators/': typeof CreatorsIndexRoute
   '/_auth/orders/$orderId': typeof AuthOrdersOrderIdRoute
   '/_auth/profile/activity': typeof AuthProfileActivityRoute
   '/_auth/profile/downloads': typeof AuthProfileDownloadsRoute
@@ -173,11 +200,14 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/cart'
+    | '/learn'
     | '/login'
     | '/register'
     | '/checkout'
     | '/profile'
+    | '/creators/$creatorId'
     | '/nfts/$nftId'
+    | '/creators/'
     | '/orders/$orderId'
     | '/profile/activity'
     | '/profile/downloads'
@@ -191,10 +221,13 @@ export interface FileRouteTypes {
     | '/'
     | '/$'
     | '/cart'
+    | '/learn'
     | '/login'
     | '/register'
     | '/checkout'
+    | '/creators/$creatorId'
     | '/nfts/$nftId'
+    | '/creators'
     | '/orders/$orderId'
     | '/profile/activity'
     | '/profile/downloads'
@@ -209,11 +242,14 @@ export interface FileRouteTypes {
     | '/$'
     | '/_auth'
     | '/cart'
+    | '/learn'
     | '/login'
     | '/register'
     | '/_auth/checkout'
     | '/_auth/profile'
+    | '/creators/$creatorId'
     | '/nfts/$nftId'
+    | '/creators/'
     | '/_auth/orders/$orderId'
     | '/_auth/profile/activity'
     | '/_auth/profile/downloads'
@@ -229,9 +265,12 @@ export interface RootRouteChildren {
   SplatRoute: typeof SplatRoute
   AuthRoute: typeof AuthRouteWithChildren
   CartRoute: typeof CartRoute
+  LearnRoute: typeof LearnRoute
   LoginRoute: typeof LoginRoute
   RegisterRoute: typeof RegisterRoute
+  CreatorsCreatorIdRoute: typeof CreatorsCreatorIdRoute
   NftsNftIdRoute: typeof NftsNftIdRoute
+  CreatorsIndexRoute: typeof CreatorsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -264,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CartRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/learn': {
+      id: '/learn'
+      path: '/learn'
+      fullPath: '/learn'
+      preLoaderRoute: typeof LearnRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -291,6 +337,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/profile'
       preLoaderRoute: typeof AuthProfileRouteImport
       parentRoute: typeof AuthRoute
+    }
+    '/creators/': {
+      id: '/creators/'
+      path: '/creators'
+      fullPath: '/creators/'
+      preLoaderRoute: typeof CreatorsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/creators/$creatorId': {
+      id: '/creators/$creatorId'
+      path: '/creators/$creatorId'
+      fullPath: '/creators/$creatorId'
+      preLoaderRoute: typeof CreatorsCreatorIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/nfts/$nftId': {
       id: '/nfts/$nftId'
@@ -401,9 +461,12 @@ const rootRouteChildren: RootRouteChildren = {
   SplatRoute: SplatRoute,
   AuthRoute: AuthRouteWithChildren,
   CartRoute: CartRoute,
+  LearnRoute: LearnRoute,
   LoginRoute: LoginRoute,
   RegisterRoute: RegisterRoute,
+  CreatorsCreatorIdRoute: CreatorsCreatorIdRoute,
   NftsNftIdRoute: NftsNftIdRoute,
+  CreatorsIndexRoute: CreatorsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

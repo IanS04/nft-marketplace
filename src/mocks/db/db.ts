@@ -2,7 +2,7 @@ import type { EditionId, Nft, NftId, Order, Quote, SupportTicket, User, UserId, 
 import { buildSeed } from './seed'
 
 export const DB_STORAGE_KEY = 'kurio:mock-db:v1'
-const SCHEMA_VERSION = 6 // v6: downloads e chamados de suporte. Mudou o formato? Incremente: o banco salvo é descartado e ressemeado.
+const SCHEMA_VERSION = 7 // v7: NFTs ligados aos criadores (creator e royalties por criador). Mudou o formato? Incremente: o banco salvo é descartado e ressemeado.
 
 export interface UserRecord { user: User; passwordSalt: string; passwordHash: string }
 export interface SessionRecord {

@@ -182,3 +182,24 @@ test.describe('permissão', () => {
     }
   })
 })
+
+test.describe('criadores', () => {
+  test.beforeEach(async ({ page }) => setup(page))
+
+  test('4 criadores, um por arte, com estatísticas do catálogo; inexistente → 404', async ({ page }) => {
+    const list = await callApi<{ items: { id: string; stats: { nftCount: number; floorPrice: string | null } }[] }>(page, '/api/creators')
+    expect(list.status).toBe(200)
+    expect(list.body.items.map((c) => c.id)).toEqual(['marina-okada', 'rafael-duarte', 'helena-vasconcelos', 'caio-mendes'])
+    // Todo NFT do catálogo pertence a um dos 4 criadores.
+    expect(list.body.items.reduce((sum, c) => sum + c.stats.nftCount, 0)).toBe(36)
+
+    const marina = await callApi<{ nfts: { id: string }[]; royaltyPercent: string }>(page, '/api/creators/marina-okada')
+    expect(marina.body.royaltyPercent).toBe('5')
+    expect(marina.body.nfts.map((n) => n.id)).toContain('emerald-ape-042')
+
+    const nft = await callApi<{ creator: { id: string } }>(page, '/api/nfts/emerald-ape-042')
+    expect(nft.body.creator.id).toBe('marina-okada')
+
+    expect((await callApi(page, '/api/creators/nao-existe')).status).toBe(404)
+  })
+})

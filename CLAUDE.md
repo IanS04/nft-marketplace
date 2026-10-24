@@ -11,7 +11,7 @@
 - Trabalhe em **etapas modulares**, nunca o projeto inteiro de uma vez. Cada etapa: código completo e tipado, com caminho (`/src/...`), testes Playwright da etapa e checklist de aceitação.
 - Use a task list para etapas com várias tarefas; o último item é sempre **verificar** (typecheck, lint, teste rodando, tela conferida).
 - Explique decisões não óbvias em 1–2 frases. O Ian está aprendendo: prefira clareza a esperteza.
-- Etapas 1–11 concluídas (seção 4). Manter typecheck, lint, build e E2E verdes a cada mudança.
+- Etapas 1–12 concluídas (seção 4). Manter typecheck, lint, build e E2E verdes a cada mudança.
 
 ## 2. O desafio em resumo
 
@@ -136,6 +136,14 @@ Pedido do Ian: implementar **todos** os itens da sidebar "Meu perfil", inclusive
 **Bugs reais corrigidos** (achados pelo teste de expiração no checkout): (1) o `CheckoutPage` trocava o formulário pelo `ErrorState` quando a revisão recebia 401, apagando o que foi digitado → erro de tela cheia só sem dados em cache; (2) a revisão ficava presa em "Sua sessão expirou" após o novo login → `OrderReviewDialog` refaz a conferência quando a sessão volta.
 **Testes**: `member.spec.ts` (lista com rollback/isolamento, compra → download registrado → atividade, ofertas, suporte, guard), `catalog.spec.ts` (timeout com `page.clock`), `auth.spec.ts` (expiração no checkout), `data-layer.spec.ts` (403 e 401 das seções), `a11y.spec.ts` (axe nas 5 telas + reflow 320px). Lição: botão com `aria-label` diferente do texto visível reprova no axe (`label-content-name-mismatch`) → complemento em `sr-only`; `opacity` em card derruba contraste.
 
+### Etapa 12 — Criadores e Aprenda + download no deploy (2026-10-24)
+Pedido do Ian: abas "Criadores" (4 pessoas fictícias, cada uma criadora de um modelo/arte, dados genéricos mas distintos) e "Aprenda" (como NFTs funcionam).
+**Criadores**: `mocks/fixtures/creators.ts` (Marina Okada/nft2, Rafael Duarte/nft1, Helena Vasconcelos/nft3, Caio Mendes/nft4), `nft.creator` e `royaltyPercent` vêm do criador da arte (`SCHEMA_VERSION = 7`). `GET /creators` e `GET /creators/:id` (`mocks/handlers/creators.ts`; estatísticas do catálogo atual; 404). Cliente: `schemas/creator.ts`, `types/creator.ts`, `services/api/endpoints/creators.ts`, `features/creators` (lista, perfil, avatar de iniciais), rotas `creators.index.tsx` e `creators.$creatorId.tsx` (loader + notFound + skeleton). Detalhe do NFT com linha "Criador".
+**Aprenda**: `/learn`, conteúdo estático em `features/learn/content.ts`, sumário com âncoras, passos com links, glossário, FAQ em `<details>`.
+**Navegação**: header (≥md) com links ativos; mobile pelo rodapé (títulos "Criadores em destaque"/"Segurança da carteira", links "Como comprar NFTs"/"Carteira e segurança").
+**Bug do deploy**: a Vercel manda `Content-Disposition: inline; filename=…` nos estáticos e o Chrome ignora o `download` do link → `lib/download.ts` baixa como blob. Suíte contra o deploy (antes desta etapa): 264 ok, 11 skips, 3 falhas só desse teste.
+**Testes**: `discover.spec.ts`, contrato de criadores em `data-layer.spec.ts`, axe + reflow 320px das 3 páginas. Lição: grid de uma coluna sem `grid-cols-1` usa trilha `auto` e um `truncate` alarga a página a 320px. Suíte: 291 execuções (11 skips); baselines atualizadas (header e linha "Criador").
+
 ## 5. Decisões de arquitetura (não reverter sem conversar)
 
 **Tipos (`src/types`)**: IDs com `Brand<string,'X'>`; `DecimalString` branded; `ApiErrorCode` derivado de `API_ERROR_CODES` (inclui `INVALID_CREDENTIALS`); `Order` é união discriminada (`PendingOrder | ConfirmedOrder | RejectedOrder`); `OrderReceipt = ConfirmedOrder`; eventos em `realtime.ts` com envelope `{eventId, type, resource, version, occurredAt, userId?, payload}`.
@@ -173,7 +181,7 @@ Pedido do Ian: implementar **todos** os itens da sidebar "Meu perfil", inclusive
 `POST /auth/register|login|logout` · `GET /auth/session` · `GET /nfts` (q, tab, categories, networks, minPrice, maxPrice, sort, page, pageSize) · `GET /nfts/featured` · `GET /nfts/:id` · `GET /favorites` · `PUT|DELETE /favorites/:nftId` (idempotentes, devolvem `{nftIds}`) · carrinho, cotação, pedidos, perfil e carteiras conforme Etapas 5 e 6 (seção 4). Referência completa: `ARCHITECTURE.md` §2.
 Erros: `VALIDATION_ERROR(422, fieldErrors) · INVALID_CREDENTIALS(401) · UNAUTHENTICATED(401) · SESSION_EXPIRED(401) · FORBIDDEN(403: carteira ou arquivo de outro usuário) · NOT_FOUND(404) · CONFLICT(409) · AVAILABILITY_CONFLICT(409) · IDEMPOTENCY_CONFLICT(409) · COUPON_INVALID/EXPIRED(422) · QUOTE_STALE(409) · WALLET_REJECTED(409) · TRANSIENT(5xx, retryable) · NETWORK_ERROR`.
 
-**Rotas (TanStack Router, file-based)**: `/` · `/nfts/$nftId` · `/cart` · `_auth` (guard com `?redirect=`) → `/checkout`, `/orders/$orderId`, `/profile` (layout com sidebar) → `/profile` e `/profile/wallets` · `/login` e `/register` (modal ≥md, página cheia no mobile) · `$` (404). Rotas privadas protegidas em `beforeLoad`.
+**Rotas (TanStack Router, file-based)**: `/` · `/nfts/$nftId` · `/creators` e `/creators/$creatorId` · `/learn` · `/cart` · `_auth` (guard com `?redirect=`) → `/checkout`, `/orders/$orderId`, `/profile` (layout com sidebar) → `/profile` e `/profile/wallets` · `/login` e `/register` (modal ≥md, página cheia no mobile) · `$` (404). Rotas privadas protegidas em `beforeLoad`.
 
 ## 6. Design (Figma) e tokens
 

@@ -65,7 +65,7 @@ function DownloadRow({ file }: { file: DownloadItem }) {
   const onDownload = async () => {
     try {
       const grant = await download.mutateAsync(file.id)
-      saveFile(grant.url, grant.fileName)
+      await saveFile(grant.url, grant.fileName)
       announce(`Download de ${file.name} iniciado.`)
     } catch (error) {
       toast.error(`Não foi possível baixar ${file.name}.`, { description: errorMessage(error) })

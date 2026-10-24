@@ -1,7 +1,6 @@
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { LogIn, Search, ShoppingCart, X } from 'lucide-react'
 import { lazy, Suspense, useRef, useState, type FormEvent } from 'react'
-import { Unavailable } from '@/components/feedback/unavailable'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useOpenAuth } from '@/features/auth/auth-dialog-store'
@@ -24,6 +23,8 @@ export function Header() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const isHome = pathname === '/'
   const isMarket = MARKET_PATHS.some((p) => pathname.startsWith(p))
+  const isCreators = pathname.startsWith('/creators')
+  const isLearn = pathname === '/learn'
 
   return (
     <header className="sticky top-0 z-40 hidden border-b border-primary/30 bg-background/95 backdrop-blur md:block">
@@ -42,8 +43,16 @@ export function Header() {
                 Mercado
               </Link>
             </li>
-            <li className={navItemClass}><Unavailable>Criadores</Unavailable></li>
-            <li className={navItemClass}><Unavailable>Aprenda</Unavailable></li>
+            <li>
+              <Link to="/creators" className={cn(navItemClass, isCreators && activeClass)} aria-current={isCreators ? 'page' : undefined}>
+                Criadores
+              </Link>
+            </li>
+            <li>
+              <Link to="/learn" className={cn(navItemClass, isLearn && activeClass)} aria-current={isLearn ? 'page' : undefined}>
+                Aprenda
+              </Link>
+            </li>
           </ul>
         </nav>
 

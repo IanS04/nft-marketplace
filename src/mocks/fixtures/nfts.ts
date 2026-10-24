@@ -5,6 +5,7 @@ import type {
   Blockchain, EditionId, EditionStatus, EthAmount, ImageAsset, Nft, NftCategory, NftEdition, NftId,
 } from '@/types'
 import { mulberry32 } from '../prng'
+import { creatorForArtwork } from './creators'
 import type { NftRecord } from '../db/db'
 
 const BASE_LISTED_AT = Date.parse('2026-07-01T12:00:00.000Z')
@@ -112,6 +113,7 @@ function buildRecord(spec: Spec, index: number, rng: () => number): NftRecord {
     width: 800,
     height: 800,
   }
+  const creator = creatorForArtwork(archetype.artwork)
   const contractAddress = `0x${Array.from({ length: 40 }, () => HEX[Math.floor(rng() * 16)]).join('')}`
 
   const nft: Nft = {
@@ -136,12 +138,12 @@ function buildRecord(spec: Spec, index: number, rng: () => number): NftRecord {
       alt: `${img.alt} (vista ${i + 1} de 4)`,
     })),
     collection: { id: 'kurio-apes', name: 'Kurio Apes' },
-    creator: { id: 'kurio-studio', name: 'Kurio Studio' },
+    creator: { id: creator.id, name: creator.name },
     attributes: [...archetype.traits, ...(spec.rare ? ['Raro'] : [])],
     rating: spec.rating,
     editions: buildEditions(id, spec.price, spec, rng),
     contractAddress,
-    royaltyPercent: '5',
+    royaltyPercent: creator.royaltyPercent,
     updatedAt: REFERENCE_DATE,
   }
 

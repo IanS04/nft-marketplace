@@ -29,6 +29,13 @@ export const queryKeys = {
     order: (orderId: string) => ['user', userId, 'orders', 'detail', orderId] as const,
   }),
 
+  /** Criadores: públicos. O detalhe traz a coleção (preços do catálogo atual). */
+  creators: {
+    all: ['creators'] as const,
+    list: () => ['creators', 'list'] as const,
+    detail: (id: string) => ['creators', 'detail', id] as const,
+  },
+
   /** Ofertas (cupons publicados): iguais para todos os usuários. */
   offers: ['offers'] as const,
 

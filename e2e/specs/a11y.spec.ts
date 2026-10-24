@@ -37,6 +37,18 @@ test.describe('auditoria axe: telas públicas', () => {
     await expectAccessible(page)
   })
 
+  test('criadores, perfil do criador e aprenda', async ({ page }) => {
+    await page.goto('/creators')
+    await expect(page.getByTestId('creators-list')).toBeVisible()
+    await expectAccessible(page)
+    await page.goto('/creators/helena-vasconcelos')
+    await expect(page.getByTestId('creator-nfts')).toBeVisible()
+    await expectAccessible(page)
+    await page.goto('/learn')
+    await page.getByText('Esta compra é real?').click() // FAQ aberta também passa pelo axe
+    await expectAccessible(page)
+  })
+
   test('login e cadastro (página) com erros de validação', async ({ page }) => {
     await page.goto('/login')
     await page.getByRole('button', { name: 'Entrar', exact: true }).last().click()
@@ -115,7 +127,7 @@ test.describe('reflow a 320px (zoom de 400%)', () => {
   test('nenhuma tela rola na horizontal', async ({ page }) => {
     // Só no projeto desktop: a emulação mobile (isMobile) "afasta o zoom" e esconderia o overflow.
     test.skip(test.info().project.name !== 'desktop', 'checagem estrita só sem emulação mobile')
-    const pages = ['/', '/nfts/emerald-ape-042', '/cart', '/login', '/register', '/nao-existe']
+    const pages = ['/', '/nfts/emerald-ape-042', '/cart', '/login', '/register', '/nao-existe', '/creators', '/creators/caio-mendes', '/learn']
     for (const path of pages) {
       await page.goto(path)
       await page.waitForLoadState('networkidle')

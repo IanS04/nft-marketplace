@@ -38,7 +38,9 @@ Prefixo `/api`. Respostas validadas com Zod. Rotas privadas exigem `Authorizatio
 | | `POST /auth/logout` | – | → 204 | – |
 | NFTs | `GET /nfts` | – | `q, tab, categories, networks, minPrice, maxPrice, sort, page, pageSize` → `{items, pageInfo, facets, query}` | 422 (parâmetro inválido) |
 | | `GET /nfts/featured` | – | → `{items}` | – |
-| | `GET /nfts/:id` | – | → `Nft` (edições, galeria, atributos) | 404 |
+| | `GET /nfts/:id` | – | → `Nft` (edições, galeria, atributos, `creator: {id, name}`) | 404 |
+| Criadores | `GET /creators` | – | → `{items: CreatorSummary[]}` (estatísticas do catálogo atual) | – |
+| | `GET /creators/:id` | – | → `Creator` (bio, processo, ferramentas, royalties, coleção) | 404 |
 | Favoritos | `GET /favorites` | ✔ | → `{nftIds}` | 401 |
 | | `GET /favorites/nfts` | ✔ | → `{items: NftSummary[]}` (lista de interesse) | 401 |
 | | `PUT` / `DELETE /favorites/:nftId` | ✔ | idempotentes → `{nftIds}` | 404 |
@@ -132,6 +134,12 @@ A sidebar do Figma tem, além de Dados do perfil e Carteiras, cinco itens. Todos
 
 No banco simulado (`SCHEMA_VERSION = 6`) entraram `downloads` (histórico) e `tickets`. A tab bar mobile leva o coração à lista de interesse, e o rodapé liga "Atividade", "Lista de interesse" e "Central de ajuda" às rotas acima.
 
+## 6.2 Criadores e Aprenda
+
+- **Criadores** (`/creators`, `/creators/$creatorId`): quatro artistas **fictícios**, um por arte do Figma (cada um "assina" um modelo). Dados em `mocks/fixtures/creators.ts`: nome, cidade, função, bio, ferramentas, processo de criação em 4 etapas, rede preferida e royalties, genéricos mas distintos entre si. Cada NFT aponta para o criador da sua arte (`nft.creator`), e o royalty do NFT é o do criador. As estatísticas (quantidade de NFTs, menor preço, edições limitadas à venda) são calculadas do **catálogo atual**, então mudam com preço e estoque. O perfil tem loader + `notFound()` (acesso direto e criador inexistente), skeleton e a coleção com o mesmo card do mercado (favoritar funciona). Avatares são iniciais, sem fotos de pessoas reais.
+- **Aprenda** (`/learn`): conteúdo educativo **estático** (`features/learn/content.ts`), como o hero e o diário: o que é um NFT, redes e taxas, edições, royalties, carteira e segurança, como comprar no Kurio (passos com links para as telas), glossário e perguntas frequentes (`<details>`). Os exemplos citam o que existe no app (taxas por rede, edições 1/1 a ABERTA, carteira principal/secundária). Sumário com âncoras (`scroll-mt` para o header fixo).
+- **Navegação:** no desktop, pelos itens "Criadores" e "Aprenda" do header (com estado ativo). No mobile, que não tem header no Figma, pelo rodapé: título "Criadores em destaque", "Segurança da carteira", "Como comprar NFTs" e "Carteira e segurança". O detalhe do NFT ganhou a linha "Criador" com link para o perfil.
+
 ## 7. Estratégia de cache (TanStack Query)
 
 | Política | Valor |
@@ -142,7 +150,7 @@ No banco simulado (`SCHEMA_VERSION = 6`) entraram `downloads` (histórico) e `ti
 | Refetch | ao focar a janela e ao reconectar |
 | Timeout HTTP | 8 s (o tempo de espera da porta de rede não conta) |
 
-- **Chaves** (`app/query-keys.ts`): catálogo `['nfts', 'list', query]`, com arrays ordenados e deduplicados para a mesma seleção dar a mesma chave; detalhe `['nfts', 'detail', id]`; **tudo que é privado fica sob `['user', userId, …]`** (sessão, favoritos e lista de interesse, carrinho, carteiras, perfil, pedidos, atividade, arquivos, chamados), então limpar esse prefixo isola usuários. A lista de interesse fica sob a chave dos favoritos (`['user', id, 'favorites', 'nfts']`): invalidar os favoritos também a relê. Ofertas são públicas: `['offers']`. Atividade e arquivos usam `staleTime: 0`, porque mudam por fora da tela (liquidação de pedido, download em outra aba). Carrinho do visitante: `['cart', 'guest', id]`. A cotação fica "dentro" do carrinho: `[...cartKey, 'quote', version, network]`.
+- **Chaves** (`app/query-keys.ts`): catálogo `['nfts', 'list', query]`, com arrays ordenados e deduplicados para a mesma seleção dar a mesma chave; detalhe `['nfts', 'detail', id]`; **tudo que é privado fica sob `['user', userId, …]`** (sessão, favoritos e lista de interesse, carrinho, carteiras, perfil, pedidos, atividade, arquivos, chamados), então limpar esse prefixo isola usuários. A lista de interesse fica sob a chave dos favoritos (`['user', id, 'favorites', 'nfts']`): invalidar os favoritos também a relê. Ofertas e criadores são públicos: `['offers']`, `['creators', 'list' | 'detail', id]`. Atividade e arquivos usam `staleTime: 0`, porque mudam por fora da tela (liquidação de pedido, download em outra aba). Carrinho do visitante: `['cart', 'guest', id]`. A cotação fica "dentro" do carrinho: `[...cartKey, 'quote', version, network]`.
 - **Respostas obsoletas:** cada combinação de filtros tem a sua chave, e o `signal` do Query é repassado ao Axios, então requisições obsoletas são canceladas. `keepPreviousData` mantém a grade anterior esmaecida enquanto a nova carrega.
 - **Atualização otimista com rollback:** favoritos (`onMutate` aplica, `onError` restaura e avisa, `onSettled` sincroniza).
 - **Invalidação:** mutations de carrinho gravam o `Cart` devolvido; conflito 409 relê o carrinho; perfil atualiza cache e sessão; pedido terminal invalida carrinho e pendentes; download e chamado novo gravam a resposta no cache e invalidam a atividade; eventos em tempo real atualizam ou invalidam (seção 8).
@@ -211,7 +219,7 @@ O CLS está dentro do recomendado (≤ 0,1). O TBT fica em 123 ms no início e 2
 - **Explorador de blocos e transações:** hashes e links simulados. "Ver no Etherscan" abre um "Explorador simulado", em vez de levar a um link que daria "não encontrado".
 - **Baselines visuais** geradas no Windows. Em outro sistema, gere as próprias (fontes renderizam diferente).
 - **Suporte:** o chamado é registrado e listado, mas não há atendente simulado: ele fica "Aberto" (a tela não promete resposta).
-- **Arquivos:** o download entrega o WebP de 800 px, o maior derivado das artes do Figma (os originais de ~2,7 MB não vão para o build).
+- **Arquivos:** o download baixa o arquivo como blob e salva com o nome da API (a Vercel envia `Content-Disposition` com o nome original do arquivo estático, que o navegador priorizaria sobre o atributo `download`). Entrega o WebP de 800 px, o maior derivado das artes do Figma (os originais de ~2,7 MB não vão para o build).
 - **Service worker:** na primeira visita, as requisições aguardam o registro do MSW (alguns centésimos de segundo).
 
 ## 13. Decisões de UX
@@ -239,8 +247,9 @@ O CLS está dentro do recomendado (≤ 0,1). O TBT fica em 123 ms no início e 2
 - **Compartilhar:** o Figma mostra Instagram, que não tem link de compartilhamento na web; foi substituído por "Copiar link".
 - **"Avaliações de colecionadores":** fora do escopo; exibe só a nota e a contagem, com a aba indisponível.
 - **Perfil, carteiras e confirmação no mobile:** sem frame no Figma; foram derivados do padrão das outras telas mobile.
-- **Navegação:** "Mercado" leva ao catálogo e fica ativo no fluxo de compra; "Criadores" e "Aprenda" (editoriais) ficam indisponíveis. Na tab bar mobile, o botão central (ícone de leitor) abre a busca e o coração leva à lista de interesse.
+- **Navegação:** "Mercado" leva ao catálogo e fica ativo no fluxo de compra; "Criadores" e "Aprenda" levam às páginas da seção 6.2 (sem frame no Figma; seguem o padrão visual das outras telas). Na tab bar mobile, o botão central (ícone de leitor) abre a busca e o coração leva à lista de interesse.
 - **Seções da conta (atividade, lista de interesse, ofertas, arquivos, suporte):** o enunciado deixa atividade, ofertas, downloads e suporte fora da entrega obrigatória, mas foram implementadas de ponta a ponta para que nenhum item da sidebar fique sem função. Sem frame no Figma, seguem o padrão da tela de perfil (título, cards `bg-card`, mesmos campos de formulário).
+- **Criadores e Aprenda:** o enunciado trata páginas editoriais como fora da entrega; foram feitas a pedido, com criadores fictícios ligados às 4 artes e conteúdo educativo estático.
 - **Fora do escopo, sem aparentar sucesso:** login social, "Esqueceu a senha?", newsletter, "Ler mais" do diário, "Minha coleção", "Estúdio do criador" e os links editoriais da Central de ajuda ("Como comprar NFTs" etc.).
 - **Carrinho:** o Figma mostra 3 itens no desktop e 4 no mobile (ilustrativo); a quantidade vem dos dados.
 - **Select de ordenação:** nativo do sistema (acessível e leve), com o mesmo visual fechado ("Ordenar por: Listados recentemente ▾").
