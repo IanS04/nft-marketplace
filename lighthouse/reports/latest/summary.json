@@ -1,21 +1,34 @@
 {
   "environment": {
-    "date": "2026-10-24T15:18:54.644Z",
+    "date": "2026-10-24T15:17:00.472Z",
     "lighthouse": "13.5.0",
     "chrome": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.0.0 Safari/537.36",
     "node": "v24.22.1",
     "os": "Windows_NT 10.0.26200 (x64)",
-    "cpu": "AMD Ryzen 5 5500                               ",
+    "cpu": "AMD Ryzen 5 5500",
     "cores": 12,
     "memoryGb": 16,
     "throttling": {
-      "method": "simulate",
-      "rttMs": 40,
-      "throughputKbps": 10240,
-      "requestLatencyMs": 0,
-      "downloadThroughputKbps": 0,
-      "uploadThroughputKbps": 0,
-      "cpuSlowdownMultiplier": 1
+      "mobile": {
+        "method": "simulate",
+        "rttMs": 150,
+        "throughputKbps": 1638.4,
+        "requestLatencyMs": 562.5,
+        "downloadThroughputKbps": 1474.5600000000002,
+        "uploadThroughputKbps": 675,
+        "cpuSlowdownMultiplier": 4,
+        "screen": "412×823"
+      },
+      "desktop": {
+        "method": "simulate",
+        "rttMs": 40,
+        "throughputKbps": 10240,
+        "requestLatencyMs": 0,
+        "downloadThroughputKbps": 0,
+        "uploadThroughputKbps": 0,
+        "cpuSlowdownMultiplier": 1,
+        "screen": "1350×940"
+      }
     },
     "server": "vite preview (build de produção), cenário de mocks \"default\""
   },

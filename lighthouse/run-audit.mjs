@@ -1,7 +1,8 @@
 // Auditoria Lighthouse reprodutível: `pnpm audit:lighthouse` (faz o build antes).
+// `node lighthouse/run-audit.mjs --from-reports` só refaz o resumo a partir dos JSON já salvos.
 // Sobe o build de produção (vite preview), roda 3× cada página × perfil num Chrome limpo por medição
 // e grava relatórios HTML/JSON + resumo com medianas, metas, métricas, versões e ambiente.
-import { mkdir, rm, writeFile } from 'node:fs/promises'
+import { mkdir, readFile, rm, writeFile } from 'node:fs/promises'
 import os from 'node:os'
 import { join } from 'node:path'
 import { chromium } from '@playwright/test'
@@ -31,60 +32,77 @@ async function auditOnce(url, formFactor) {
   }
 }
 
-async function main() {
+const reportBase = (pageId, formFactor, i) => join(AUDIT.outDir, `${pageId}-${formFactor}-${i}`)
+
+/** Fase 1: mede e salva os relatórios (HTML + JSON) de cada página × perfil × medição. */
+async function measureAll() {
   await rm(AUDIT.outDir, { recursive: true, force: true })
   await mkdir(AUDIT.outDir, { recursive: true })
   const server = await preview({ preview: { port: AUDIT.port, strictPort: true }, logLevel: 'warn' })
   const baseUrl = `http://localhost:${AUDIT.port}`
-  const results = []
-  let lighthouseVersion = ''
-  let userAgent = ''
-  let throttling = {}
-
   try {
     for (const page of AUDIT.pages) {
       for (const formFactor of AUDIT.formFactors) {
-        const runs = []
         for (let i = 1; i <= AUDIT.runs; i++) {
           process.stdout.write(`→ ${page.id} · ${formFactor} · medição ${i}/${AUDIT.runs}… `)
           const { lhr, report } = await auditOnce(baseUrl + page.path, formFactor)
-          const base = join(AUDIT.outDir, `${page.id}-${formFactor}-${i}`)
-          await writeFile(`${base}.report.html`, report[0])
-          await writeFile(`${base}.report.json`, report[1])
-          lighthouseVersion = lhr.lighthouseVersion
-          userAgent = lhr.environment.hostUserAgent
-          throttling = { method: lhr.configSettings.throttlingMethod, ...lhr.configSettings.throttling }
-          const scores = Object.fromEntries(AUDIT.categories.map((c) => [c, Math.round((lhr.categories[c]?.score ?? 0) * 100)]))
-          const metrics = Object.fromEntries(AUDIT.metrics.map((m) => [m, lhr.audits[m]?.numericValue ?? null]))
-          runs.push({ scores, metrics })
-          console.log(AUDIT.categories.map((c) => `${c}=${scores[c]}`).join(' '))
+          await writeFile(`${reportBase(page.id, formFactor, i)}.report.html`, report[0])
+          await writeFile(`${reportBase(page.id, formFactor, i)}.report.json`, report[1])
+          console.log(AUDIT.categories.map((c) => `${c}=${Math.round((lhr.categories[c]?.score ?? 0) * 100)}`).join(' '))
         }
-        results.push({
-          page: page.id,
-          path: page.path,
-          formFactor,
-          runs,
-          median: {
-            scores: Object.fromEntries(AUDIT.categories.map((c) => [c, median(runs.map((r) => r.scores[c]))])),
-            metrics: Object.fromEntries(AUDIT.metrics.map((m) => [m, median(runs.map((r) => r.metrics[m]))])),
-          },
-        })
       }
     }
   } finally {
     await new Promise((resolve) => server.httpServer.close(resolve))
   }
+}
+
+/** Fase 2: monta o resumo SEMPRE a partir dos JSON salvos (`--from-reports` pula a fase 1). */
+async function main() {
+  if (!process.argv.includes('--from-reports')) await measureAll()
+
+  const results = []
+  const throttlingByProfile = {}
+  let firstLhr = null
+  for (const page of AUDIT.pages) {
+    for (const formFactor of AUDIT.formFactors) {
+      const runs = []
+      for (let i = 1; i <= AUDIT.runs; i++) {
+        const lhr = JSON.parse(await readFile(`${reportBase(page.id, formFactor, i)}.report.json`, 'utf8'))
+        firstLhr ??= lhr
+        throttlingByProfile[formFactor] = {
+          method: lhr.configSettings.throttlingMethod,
+          ...lhr.configSettings.throttling,
+          screen: `${lhr.configSettings.screenEmulation.width}×${lhr.configSettings.screenEmulation.height}`,
+        }
+        runs.push({
+          scores: Object.fromEntries(AUDIT.categories.map((c) => [c, Math.round((lhr.categories[c]?.score ?? 0) * 100)])),
+          metrics: Object.fromEntries(AUDIT.metrics.map((m) => [m, lhr.audits[m]?.numericValue ?? null])),
+        })
+      }
+      results.push({
+        page: page.id,
+        path: page.path,
+        formFactor,
+        runs,
+        median: {
+          scores: Object.fromEntries(AUDIT.categories.map((c) => [c, median(runs.map((r) => r.scores[c]))])),
+          metrics: Object.fromEntries(AUDIT.metrics.map((m) => [m, median(runs.map((r) => r.metrics[m]))])),
+        },
+      })
+    }
+  }
 
   const environment = {
-    date: new Date().toISOString(),
-    lighthouse: lighthouseVersion,
-    chrome: userAgent,
+    date: firstLhr.fetchTime,
+    lighthouse: firstLhr.lighthouseVersion,
+    chrome: firstLhr.environment.hostUserAgent,
     node: process.version,
     os: `${os.type()} ${os.release()} (${os.arch()})`,
-    cpu: os.cpus()[0]?.model ?? 'desconhecida',
+    cpu: (os.cpus()[0]?.model ?? 'desconhecida').trim(),
     cores: os.cpus().length,
     memoryGb: Math.round(os.totalmem() / 1024 ** 3),
-    throttling,
+    throttling: throttlingByProfile,
     server: 'vite preview (build de produção), cenário de mocks "default"',
   }
   await writeFile(join(AUDIT.outDir, 'summary.json'), JSON.stringify({ environment, targets: AUDIT.targets, results }, null, 2))
@@ -115,7 +133,8 @@ function toMarkdown(env, results) {
     `- Chrome: ${env.chrome}`,
     `- Node: ${env.node} · SO: ${env.os}`,
     `- CPU: ${env.cpu} (${env.cores} núcleos) · RAM: ${env.memoryGb} GB`,
-    `- Throttling: ${JSON.stringify(env.throttling)}`,
+    ...Object.entries(env.throttling).map(([profile, t]) =>
+      `- Throttling ${profile}: ${t.method}, RTT ${t.rttMs} ms, ${Math.round(t.throughputKbps / 1024 * 10) / 10} Mbps, CPU ${t.cpuSlowdownMultiplier}×, tela ${t.screen}`),
     '',
   ]
   return lines.join('\n')

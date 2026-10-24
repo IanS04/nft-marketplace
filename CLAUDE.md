@@ -119,7 +119,10 @@ Resultado (medianas): desktop início 99 / detalhe 99; mobile início ~77 / deta
 Otimizações: render imediato com **porta de rede** (`app/network-ready.ts`: Axios e socket esperam o MSW; a UI não); formulários de auth, `UserMenu` (Radix menu + floating-ui) e sonner **sob demanda** (`lib/toast.ts` com fila até o `Toaster` montar, `DeferredToaster` na raiz); select de ordenação **nativo** (saiu Radix Select/Checkbox); fonte JetBrains Mono self-hosted (só latin, `public/fonts/`, OFL) com preload; preload da arte do hero; Hero renderiza só a variante do viewport (`useMediaQuery`); plugin `kurio:preload-mocks` no `vite.config.ts` injeta `modulepreload` dos chunks do MSW (baixam em paralelo ao app); `<main>` com `min-h-[100dvh]` (CLS do rodapé no detalhe: 0.099 → 0); `favicon.svg` (404 no console derrubava BP) e `robots.txt` (SEO).
 **Por que o mobile fica < 90** (para o ARCHITECTURE.md): LCP mobile é a imagem do 1º card / do NFT (depende de dados) → cadeia JS principal (~200 KB gzip: React+Router+Query+Axios+Zod, stack obrigatória) → MSW no navegador (~100 KB gzip + registro de service worker; o enunciado exige auditar com mocks) → API → imagem, no 4G lento simulado com CPU 4×. FCP ~2,8 s, LCP ~4,0–4,5 s, CLS ~0, TBT 120–300 ms. Chegar a 90 exigiria SSR/pré-renderização + API real no servidor.
 
-Ainda **não existem**: README/ARCHITECTURE completos, deploy.
+### Etapa 10 (parte 2) — documentação e preparo do deploy (2026-10-24)
+`README.md` (setup, env, credenciais, cenários e reset, comandos, como reproduzir cada falha, testes, Lighthouse, estrutura) e `ARCHITECTURE.md` (camadas, contratos REST, eventos e limitações do transporte, sessão, carrinho, pedidos/idempotência, cache, reconciliação, MSW, acessibilidade, Lighthouse com justificativa, limitações, decisões de UX, desvios do Figma e assets). `vercel.json` (pnpm install --frozen-lockfile, `pnpm build`, `dist`, rewrite SPA `/(.*) → /index.html`, cache imutável em `/assets`, `no-cache` no `mockServiceWorker.js`). `package.json` com `packageManager: pnpm@10.34.8` e `engines.node >=20`. `run-audit.mjs` registra throttling por perfil e tem `--from-reports` (refaz o resumo sem medir de novo).
+
+Ainda **não existe**: deploy (o Ian importa o repositório na Vercel; depois validar o site publicado e colocar a URL no README).
 
 ## 5. Decisões de arquitetura (não reverter sem conversar)
 
